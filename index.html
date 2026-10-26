@@ -1,0 +1,3487 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <!--
+    資安：內容安全政策 (CSP)
+    只允許從下列已知來源載入程式與連線，即使頁面被注入惡意程式碼，也無法把帳目或金鑰送到其他網站。
+    新增任何外部服務時，記得同步把它的網域加進對應的 *-src。
+  -->
+  <meta http-equiv="Content-Security-Policy" content="
+    default-src 'self';
+    script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://cdn.tailwindcss.com https://unpkg.com https://*.googleapis.com https://*.gstatic.com https://*.google.com https://*.ggpht.com;
+    style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com https://unpkg.com;
+    font-src 'self' data: https://fonts.gstatic.com https://cdnjs.cloudflare.com;
+    img-src 'self' data: blob: https://*.googleapis.com https://*.gstatic.com https://*.google.com https://*.googleusercontent.com https://*.ggpht.com https://tile.openstreetmap.org;
+    connect-src 'self' data: blob: https://*.googleapis.com https://*.gstatic.com https://*.google.com https://*.googleusercontent.com https://open.er-api.com https://api.open-meteo.com;
+    worker-src blob:;
+    frame-src https://*.google.com;
+    object-src 'none';
+    base-uri 'none';
+    form-action 'self';
+  " />
+  <!-- 資安：Google 金鑰的「HTTP 參照網址限制」依賴瀏覽器送出來源網域，請勿改成 no-referrer -->
+  <meta name="referrer" content="strict-origin-when-cross-origin" />
+  <title>2027 京都冬日自由行｜行程導航與雙人記帳手冊 (1/10-1/15)</title>
+  <!-- Tailwind CSS (pinned version) -->
+  <script src="https://cdn.tailwindcss.com/3.4.16"></script>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@600;700&display=swap" rel="stylesheet">
+  <!-- Font Awesome (Subresource Integrity: CDN 檔案若被竄改，瀏覽器會拒絕載入) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+        integrity="sha384-t1nt8BQoYMLFN5p42tRAtuAAFQaCQODekUVeKKZrEnEyp4H2R0RHFz0KWpmj7i8g"
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <!-- Google Maps JavaScript API is loaded by initMap(); Leaflet is only loaded as a fallback -->
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            kyoto: {
+              bg: '#F9F7F2',       // 溫潤和紙白
+              card: '#FFFFFF',
+              matcha: '#3A5A40',   // 宇治抹茶綠
+              matchaLight: '#588157',
+              matchaPale: '#E9F0EA',
+              torii: '#C84B31',    // 伏見鳥居朱紅
+              toriiPale: '#FDECE8',
+              gold: '#B8860B',     // 金閣寺古金
+              goldPale: '#FDF6E2',
+              ink: '#2B2B28',      // 墨黑
+              muted: '#6B6A65',
+              border: '#E5E0D5'
+            }
+          },
+          fontFamily: {
+            sans: ['"Inter"', '"Noto Sans TC"', 'sans-serif'],
+            serif: ['"Noto Serif TC"', 'serif']
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      background-color: #F9F7F2;
+      color: #2B2B28;
+      font-family: 'Inter', 'Noto Sans TC', sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .font-serif-tc {
+      font-family: 'Noto Serif TC', serif;
+    }
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #F9F7F2;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #C5BFB3;
+      border-radius: 9999px;
+    }
+    /* Custom Numbered Map Marker */
+    .custom-map-marker {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      color: #fff;
+      font-weight: 700;
+      font-size: 13px;
+      border: 2.5px solid #fff;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.35);
+      transition: transform 0.2s ease;
+      cursor: pointer;
+    }
+    .custom-map-marker:hover {
+      transform: scale(1.15);
+    }
+    /* Google Advanced Markers anchor at bottom-center; shift down so the circle is centered on the spot */
+    .gmap-marker-center {
+      transform: translateY(50%);
+    }
+    .gmap-marker-below {
+      transform: translateY(calc(100% + 6px));
+    }
+    /* Active card highlight animation */
+    .stop-card-active {
+      border-color: #3A5A40 !important;
+      box-shadow: 0 0 0 3px rgba(58, 90, 64, 0.2) !important;
+    }
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col pb-20 md:pb-10">
+
+  <!-- ================= TOP HEADER & DASHBOARD ================= -->
+  <header class="bg-kyoto-matcha text-white shadow-md relative overflow-hidden">
+    <!-- Subtle decorative circle -->
+    <div class="absolute -right-12 -top-12 w-48 h-48 rounded-full bg-white/5 pointer-events-none"></div>
+    <div class="absolute right-20 -bottom-16 w-36 h-36 rounded-full bg-kyoto-torii/20 pointer-events-none"></div>
+
+    <div class="max-w-7xl mx-auto px-4 pt-5 pb-4 relative z-10">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+          <div class="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-white/15 text-xs font-medium tracking-wide mb-2 backdrop-blur-sm">
+            <span class="w-2 h-2 rounded-full bg-amber-300 animate-pulse"></span>
+            2027/01/10 (日) ～ 01/15 (五)｜6天5夜・雙人自由行
+          </div>
+          <h1 class="text-2xl md:text-3xl font-serif-tc font-bold tracking-tight flex items-center gap-2.5">
+            <span>⛩️ 京都冬日漫遊手冊</span>
+          </h1>
+        </div>
+
+        <!-- Quick Emergency / Weather / Cloud / Hotel Navigation Actions -->
+        <div class="flex flex-wrap items-center gap-2">
+          <a href="https://www.google.com/maps/dir/?api=1&destination=Shizutetsu+Hotel+Prezio+Kyoto+Shijo&travelmode=transit"
+             target="_blank" rel="noopener noreferrer"
+             class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-kyoto-torii hover:bg-red-700 text-white text-xs md:text-sm font-semibold shadow-sm transition">
+            <i class="fa-solid fa-hotel"></i>
+            <span>一鍵導航回飯店</span>
+          </a>
+          <button onclick="openModal('weatherInfoModal')"
+                  class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/15 hover:bg-white/25 text-white text-xs md:text-sm font-medium backdrop-blur-sm transition"
+                  title="點擊查看京都7日預報與冬季穿搭">
+            <span id="headerWeatherIcon">⛅</span>
+            <span id="headerWeatherText">京都天氣載入中</span>
+          </button>
+          <button onclick="openModal('sheetsSyncModal')"
+                  class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/15 hover:bg-white/25 text-white text-xs md:text-sm font-medium backdrop-blur-sm transition"
+                  title="設定 Google 試算表雙向雲端同步">
+            <span id="headerSyncDot" class="w-2 h-2 rounded-full bg-stone-300"></span>
+            <i class="fa-solid fa-table"></i>
+            <span id="headerSyncLabel">試算表同步</span>
+          </button>
+          <button onclick="openModal('hotelInfoModal')"
+                  class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/15 hover:bg-white/25 text-white text-xs md:text-sm font-medium backdrop-blur-sm transition">
+            <i class="fa-solid fa-elevator"></i>
+            <span>飯店電梯出口攻略</span>
+          </button>
+          <button onclick="openModal('flightInfoModal')"
+                  class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/15 hover:bg-white/25 text-white text-xs md:text-sm font-medium backdrop-blur-sm transition">
+            <i class="fa-solid fa-plane-departure"></i>
+            <span>星宇航班 & 退稅新制</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Compact Summary Cards Row -->
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-2.5 mt-4">
+        <!-- Flight Card -->
+        <div class="bg-white/10 backdrop-blur-sm rounded-xl p-3 border border-white/15">
+          <div class="flex items-center justify-between text-xs text-white/75 mb-1">
+            <span>星宇</span>
+            <span class="font-semibold text-amber-300">NT$28,850</span>
+          </div>
+          <div class="text-xs md:text-sm font-semibold truncate">去 1/10 07:40→11:10 (JX820)</div>
+          <div class="text-xs md:text-sm font-semibold truncate">回 1/15 14:00→16:20 (JX823)</div>
+        </div>
+
+        <!-- Hotel Card -->
+        <div class="bg-white/10 backdrop-blur-sm rounded-xl p-3 border border-white/15">
+          <div class="flex items-center justify-between text-xs text-white/75 mb-1">
+            <span>飯店</span>
+            <span class="font-semibold text-amber-300">NT$7,901</span>
+          </div>
+          <div class="text-xs md:text-sm font-semibold truncate">京都四條靜鐵 PREZIO</div>
+          <div class="text-[11px] text-white/80 truncate">地鐵四條/烏丸站 (23號出口電梯)</div>
+        </div>
+
+        <!-- Core Budget Live Status -->
+        <div class="bg-white/10 backdrop-blur-sm rounded-xl p-3 border border-white/15 cursor-pointer hover:bg-white/15 transition" onclick="switchMainTab('expense')">
+          <div class="flex items-center justify-between text-xs text-white/75 mb-1">
+            <span>旅費</span>
+            <span id="headerCorePercent" class="font-semibold text-emerald-300">0%</span>
+          </div>
+          <div class="text-sm md:text-base font-bold" id="headerCoreSpent">NT$ 0</div>
+          <div class="text-[11px] text-white/80 truncate" id="headerCoreRemain">剩餘可用：NT$ 65,000</div>
+        </div>
+
+        <!-- Shopping & Split Status -->
+        <div class="bg-white/10 backdrop-blur-sm rounded-xl p-3 border border-white/15 cursor-pointer hover:bg-white/15 transition" onclick="switchMainTab('expense')">
+          <div class="flex items-center justify-between text-xs text-white/75 mb-1">
+            <span>購物</span>
+            <span class="text-[11px] underline">點此記帳</span>
+          </div>
+          <div class="text-sm md:text-base font-bold text-amber-200" id="headerShopSpent">NT$ 0</div>
+          <div class="text-[11px] text-white/80 truncate" id="headerSplitSummary">分帳狀態：計算中...</div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ================= STICKY NAVIGATION TABS ================= -->
+  <nav class="sticky top-0 z-30 bg-kyoto-bg/95 backdrop-blur-md border-b border-kyoto-border shadow-sm">
+    <div class="max-w-7xl mx-auto px-4">
+      <div class="flex items-center justify-between gap-1 py-2">
+        <div class="flex items-center gap-1 md:gap-2 w-full md:w-auto">
+          <button id="tabBtn-itinerary" onclick="switchMainTab('itinerary')"
+                  class="flex-1 md:flex-initial inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs md:text-sm font-bold transition bg-kyoto-matcha text-white shadow-sm">
+            <i class="fa-solid fa-map-location-dot"></i>
+            <span>每日行程與導航</span>
+          </button>
+          <button id="tabBtn-expense" onclick="switchMainTab('expense')"
+                  class="flex-1 md:flex-initial inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs md:text-sm font-bold transition text-kyoto-ink hover:bg-kyoto-matchaPale">
+            <i class="fa-solid fa-yen-sign"></i>
+            <span>雙人記帳與分帳</span>
+          </button>
+          <button id="tabBtn-checklist" onclick="switchMainTab('checklist')"
+                  class="flex-1 md:flex-initial inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs md:text-sm font-bold transition text-kyoto-ink hover:bg-kyoto-matchaPale">
+            <i class="fa-solid fa-clipboard-check"></i>
+            <span>行前清單與新法規</span>
+          </button>
+        </div>
+
+        <!-- Quick Exchange Rate Pill on Desktop -->
+        <div class="hidden md:flex items-center gap-2 text-xs bg-white px-3 py-1.5 rounded-xl border border-kyoto-border">
+          <span class="text-kyoto-muted">即時匯率：</span>
+          <span class="font-semibold text-kyoto-matcha">1 JPY = <span id="navRateDisplay">0.215</span> TWD</span>
+          <button onclick="fetchLiveExchangeRate(true)" class="text-kyoto-matcha hover:underline ml-1" title="從公開匯率API抓取最新日圓匯率">
+            <i class="fa-solid fa-arrows-rotate"></i> 同步
+          </button>
+          <button onclick="switchMainTab('expense'); document.getElementById('rateInput').focus();" class="text-kyoto-torii hover:underline ml-1">手動</button>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ================= MAIN CONTENT CONTAINER ================= -->
+  <main class="max-w-7xl mx-auto px-4 pt-5 flex-1 w-full">
+
+    <!-- =============================================================== -->
+    <!-- TAB 1: 每日行程、點對點交通與地圖導航 (ITINERARY & MAP)           -->
+    <!-- =============================================================== -->
+    <section id="tabContent-itinerary" class="space-y-4">
+
+      <!-- Day Selector Bar -->
+      <div class="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1" id="dayTabsContainer">
+        <!-- Populated by JS -->
+      </div>
+
+      <!-- Day Banner & Transport Ticket Notice -->
+      <div id="daySummaryBanner" class="bg-white rounded-2xl p-4 border border-kyoto-border shadow-sm flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+        <!-- Populated by JS -->
+      </div>
+
+      <!-- Split Layout: Left/Top Interactive Map + Right/Bottom Stop Cards -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+
+        <!-- Interactive Map Column (Sticky on Desktop) -->
+        <div class="lg:col-span-5 lg:sticky lg:top-20 bg-white rounded-2xl border border-kyoto-border shadow-sm overflow-hidden">
+          <div class="p-3 bg-kyoto-matchaPale/60 border-b border-kyoto-border flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <i class="fa-solid fa-compass text-kyoto-matcha"></i>
+              <span class="text-xs md:text-sm font-bold text-kyoto-ink" id="mapHeaderTitle">當日路線互動地圖</span>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <button onclick="fitCurrentDayMapBounds()"
+                      class="px-2.5 py-1 rounded-lg bg-white hover:bg-kyoto-matcha hover:text-white text-kyoto-matcha border border-kyoto-matcha/30 text-xs font-medium transition">
+                <i class="fa-solid fa-expand mr-1"></i>全覽路線
+              </button>
+              <button onclick="focusHotelOnMap()"
+                      class="px-2.5 py-1 rounded-lg bg-white hover:bg-kyoto-torii hover:text-white text-kyoto-torii border border-kyoto-torii/30 text-xs font-medium transition">
+                <i class="fa-solid fa-bed mr-1"></i>飯店位置
+              </button>
+              <button onclick="toggleMobileMapSize()" class="lg:hidden px-2 py-1 rounded-lg bg-white text-kyoto-muted border border-kyoto-border text-xs">
+                <i class="fa-solid fa-up-down"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Map Container (Google Maps, or Leaflet fallback) -->
+          <div id="kyotoMap" class="w-full h-64 md:h-80 lg:h-[480px] z-10 transition-all duration-300 bg-stone-100"></div>
+
+          <!-- Map Legend & Google Maps Full Route Helper -->
+          <div class="p-3 bg-white border-t border-kyoto-border flex flex-wrap items-center justify-between gap-2 text-xs">
+            <div class="flex flex-wrap items-center gap-2.5">
+              <span class="inline-flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-[#3A5A40]"></span>景點</span>
+              <span class="inline-flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-[#C84B31]"></span>美食</span>
+              <span class="inline-flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-[#B8860B]"></span>購物</span>
+              <span class="inline-flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-[#2563EB]"></span>交通/住宿</span>
+              <span id="mapProviderBadge" class="text-[10px] px-1.5 py-0.5 rounded bg-stone-100 text-kyoto-muted border border-kyoto-border">地圖載入中…</span>
+            </div>
+            <a id="googleMapsDayRouteLink" href="#" target="_blank" rel="noopener noreferrer"
+               class="inline-flex items-center gap-1 font-semibold text-kyoto-matcha hover:text-kyoto-torii transition">
+              <span>在 Google Maps 開啟當日多點路線</span>
+              <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+            </a>
+          </div>
+        </div>
+
+        <!-- Timeline Cards Column -->
+        <div class="lg:col-span-7 space-y-4" id="dayStopsContainer">
+          <!-- Populated by JS -->
+        </div>
+
+      </div>
+    </section>
+
+    <!-- =============================================================== -->
+    <!-- TAB 2: 雙人記帳、匯率換算與分帳中心 (EXPENSE TRACKER & SPLIT)    -->
+    <!-- =============================================================== -->
+    <section id="tabContent-expense" class="hidden space-y-6">
+
+      <!-- Google Sheets Cloud Sync Bar -->
+      <div class="bg-white rounded-2xl p-4 border border-kyoto-border shadow-sm flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+        <div class="flex items-start sm:items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-kyoto-matchaPale text-kyoto-matcha flex items-center justify-center flex-shrink-0 text-lg">
+            <i class="fa-solid fa-cloud-arrow-up"></i>
+          </div>
+          <div>
+            <div class="flex flex-wrap items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-stone-400" id="expenseSyncDot"></span>
+              <h3 class="text-sm md:text-base font-bold text-kyoto-ink" id="expenseSyncTitle">Google 試算表雲端同步：尚未綁定（目前自動儲存於本機）</h3>
+            </div>
+            <p class="text-xs text-kyoto-muted mt-0.5" id="expenseSyncSubtitle">
+              綁定 Google 試算表後，兩支手機可即時雙向同步帳目，並在雲端試算表自動整理出完整分帳報表！
+            </p>
+          </div>
+        </div>
+        <div class="flex flex-wrap items-center gap-2 shrink-0">
+          <button onclick="openModal('sheetsSyncModal')"
+                  class="px-3.5 py-2 rounded-xl bg-kyoto-matcha hover:bg-kyoto-matchaLight text-white text-xs font-bold shadow-sm transition">
+            <i class="fa-solid fa-gear mr-1"></i>綁定 / 設定試算表
+          </button>
+          <button onclick="pullFromGoogleSheet()"
+                  class="px-3 py-2 rounded-xl bg-kyoto-matchaPale hover:bg-kyoto-matcha hover:text-white text-kyoto-matcha text-xs font-bold transition"
+                  title="從 Google 試算表下載最新帳目">
+            <i class="fa-solid fa-cloud-arrow-down mr-1"></i>讀取雲端
+          </button>
+          <button onclick="pushToGoogleSheet(true)"
+                  class="px-3 py-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-kyoto-ink text-xs font-semibold transition"
+                  title="將目前所有帳目完整上傳至 Google 試算表">
+            <i class="fa-solid fa-cloud-arrow-up mr-1"></i>覆寫上傳
+          </button>
+        </div>
+      </div>
+
+      <!-- Top Row: Exchange Rate Calculator & Traveler Names Config -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+        <!-- Quick Currency Converter Card -->
+        <div class="lg:col-span-7 bg-white rounded-2xl p-4 border border-kyoto-border shadow-sm">
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+            <div>
+              <h3 class="text-sm md:text-base font-bold flex items-center gap-2">
+                <i class="fa-solid fa-calculator text-kyoto-matcha"></i>
+                <span>日幣 ⇄ 台幣隨身換算器 & 即時匯率</span>
+              </h3>
+              <p class="text-[11px] text-kyoto-muted mt-0.5" id="rateStatusText">匯率來源：預設基準匯率 (可點右側更新即時匯率)</p>
+            </div>
+            <div class="flex flex-wrap items-center gap-1.5 text-xs bg-kyoto-matchaPale px-2.5 py-1.5 rounded-xl">
+              <span>1 JPY =</span>
+              <input id="rateInput" type="number" step="0.0001" min="0.05" max="1" value="0.215"
+                     onchange="updateExchangeRate(this.value)"
+                     class="w-20 px-1.5 py-0.5 bg-white border border-kyoto-matcha/40 rounded text-center font-bold text-kyoto-matcha focus:outline-none" />
+              <span>TWD</span>
+              <button onclick="fetchLiveExchangeRate(true)"
+                      class="ml-1 px-2 py-0.5 rounded bg-kyoto-matcha text-white font-semibold hover:bg-kyoto-matchaLight transition"
+                      title="自動抓取今日最新日圓兌台幣匯率">
+                <i class="fa-solid fa-arrows-rotate mr-0.5"></i>即時匯率
+              </button>
+            </div>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div class="relative">
+              <label class="text-xs text-kyoto-muted block mb-1">輸入日幣 (JPY ¥)</label>
+              <div class="flex items-center">
+                <span class="px-3 py-2 bg-stone-100 border border-r-0 border-kyoto-border rounded-l-xl font-bold text-sm">¥</span>
+                <input id="quickJpyInput" type="number" placeholder="例如：3500"
+                       oninput="convertQuickCurrency('JPY')"
+                       class="w-full px-3 py-2 border border-kyoto-border rounded-r-xl text-sm font-semibold focus:outline-none focus:border-kyoto-matcha" />
+              </div>
+            </div>
+            <div class="relative">
+              <label class="text-xs text-kyoto-muted block mb-1">折合台幣 (TWD NT$)</label>
+              <div class="flex items-center">
+                <span class="px-3 py-2 bg-stone-100 border border-r-0 border-kyoto-border rounded-l-xl font-bold text-sm">NT$</span>
+                <input id="quickTwdInput" type="number" placeholder="自動換算台幣"
+                       oninput="convertQuickCurrency('TWD')"
+                       class="w-full px-3 py-2 border border-kyoto-border rounded-r-xl text-sm font-semibold text-kyoto-torii focus:outline-none focus:border-kyoto-matcha" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Traveler Names & Split Settlement Box -->
+        <div class="lg:col-span-5 bg-white rounded-2xl p-4 border border-kyoto-border shadow-sm flex flex-col justify-between">
+          <div class="flex items-center justify-between mb-2">
+            <h3 class="text-sm md:text-base font-bold flex items-center gap-2">
+              <i class="fa-solid fa-scale-balanced text-kyoto-torii"></i>
+              <span>雙人分帳即時結算</span>
+            </h3>
+            <div class="flex items-center gap-1 text-xs">
+              <input id="travelerAName" type="text" value="旅伴 A" maxlength="20" onchange="saveTravelerNames()"
+                     class="w-16 px-1.5 py-0.5 border border-kyoto-border rounded text-center font-medium" title="點擊修改姓名" />
+              <span class="text-kyoto-muted">&</span>
+              <input id="travelerBName" type="text" value="旅伴 B" maxlength="20" onchange="saveTravelerNames()"
+                     class="w-16 px-1.5 py-0.5 border border-kyoto-border rounded text-center font-medium" title="點擊修改姓名" />
+            </div>
+          </div>
+
+          <div id="splitResultCard" class="bg-kyoto-toriiPale/60 border border-kyoto-torii/30 rounded-xl p-3 my-1">
+            <!-- Populated by JS -->
+          </div>
+
+          <div class="flex items-center justify-between text-xs text-kyoto-muted mt-2 pt-2 border-t border-kyoto-border">
+            <span id="paidByADisplay">旅伴 A 已先墊：NT$ 0</span>
+            <span id="paidByBDisplay">旅伴 B 已先墊：NT$ 0</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Second Row: Budget Progress Dashboard & Category Breakdown -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+        <!-- Core Budget vs Actual -->
+        <div class="lg:col-span-6 bg-white rounded-2xl p-5 border border-kyoto-border shadow-sm space-y-4">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="text-base font-bold text-kyoto-ink">🎯 核心旅費預算監控（不含個人購物）</h3>
+              <p class="text-xs text-kyoto-muted">包含：星宇機票、靜鐵5晚住宿、住宿稅、餐飲、當地交通、和服門票、保險網卡</p>
+            </div>
+            <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-kyoto-matchaPale text-kyoto-matcha">
+              目標 NT$65,000
+            </span>
+          </div>
+
+          <!-- Progress Bar -->
+          <div>
+            <div class="flex justify-between text-xs font-semibold mb-1.5">
+              <span id="coreSpentLabel">已支用：NT$ 37,181</span>
+              <span id="coreRemainLabel" class="text-kyoto-matcha">剩餘額度：NT$ 27,819</span>
+            </div>
+            <div class="w-full h-3.5 bg-stone-200 rounded-full overflow-hidden">
+              <div id="coreProgressBar" class="h-full bg-kyoto-matcha transition-all duration-500 rounded-full" style="width: 57%"></div>
+            </div>
+          </div>
+
+          <!-- 3 Mini Summary Boxes -->
+          <div class="grid grid-cols-3 gap-2 pt-2">
+            <div class="bg-kyoto-bg rounded-xl p-2.5 border border-kyoto-border">
+              <div class="text-[11px] text-kyoto-muted">核心旅費合計</div>
+              <div class="text-sm md:text-base font-bold text-kyoto-ink mt-0.5" id="statCoreTotal">NT$ 0</div>
+              <div class="text-[11px] text-kyoto-muted" id="statCorePerPerson">每人 NT$ 0</div>
+            </div>
+            <div class="bg-amber-50/70 rounded-xl p-2.5 border border-amber-200">
+              <div class="text-[11px] text-amber-800">購物伴手禮合計</div>
+              <div class="text-sm md:text-base font-bold text-amber-900 mt-0.5" id="statShopTotal">NT$ 0</div>
+              <div class="text-[11px] text-amber-700" id="statShopJpy">約 ¥ 0</div>
+            </div>
+            <div class="bg-kyoto-matchaPale/50 rounded-xl p-2.5 border border-kyoto-matcha/20">
+              <div class="text-[11px] text-kyoto-matcha">整趟總花費 (含購物)</div>
+              <div class="text-sm md:text-base font-bold text-kyoto-matcha mt-0.5" id="statGrandTotal">NT$ 0</div>
+              <div class="text-[11px] text-kyoto-matcha" id="statGrandPerPerson">每人 NT$ 0</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Category Breakdown Bars -->
+        <div class="lg:col-span-6 bg-white rounded-2xl p-5 border border-kyoto-border shadow-sm">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="text-base font-bold text-kyoto-ink">📊 六大分類支出佔比與預估對照</h3>
+            <span class="text-xs text-kyoto-muted">可從行程卡點「記一筆」快速帶入</span>
+          </div>
+          <div id="categoryBreakdownContainer" class="space-y-2.5 text-xs">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Third Row: Add Expense Form + Expense History Table -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+
+        <!-- Add Expense Form Card -->
+        <div class="lg:col-span-4 bg-white rounded-2xl p-5 border border-kyoto-border shadow-sm lg:sticky lg:top-20">
+          <h3 class="text-base font-bold text-kyoto-ink mb-3 flex items-center gap-2">
+            <i class="fa-solid fa-circle-plus text-kyoto-matcha"></i>
+            <span id="expenseFormTitle">新增支出紀錄</span>
+          </h3>
+
+          <form id="expenseForm" onsubmit="handleSaveExpense(event)" class="space-y-3 text-xs md:text-sm">
+            <input type="hidden" id="editExpenseId" value="" />
+
+            <div class="grid grid-cols-2 gap-2.5">
+              <div>
+                <label class="block text-xs text-kyoto-muted mb-1">所屬日期</label>
+                <select id="expDay" class="w-full px-3 py-2 rounded-xl border border-kyoto-border bg-white focus:outline-none focus:border-kyoto-matcha">
+                  <option value="行前">行前預訂</option>
+                  <option value="Day 1">Day 1 (1/10 日)</option>
+                  <option value="Day 2">Day 2 (1/11 一)</option>
+                  <option value="Day 3">Day 3 (1/12 二)</option>
+                  <option value="Day 4">Day 4 (1/13 三)</option>
+                  <option value="Day 5">Day 5 (1/14 四)</option>
+                  <option value="Day 6">Day 6 (1/15 五)</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs text-kyoto-muted mb-1">支出分類</label>
+                <select id="expCategory" class="w-full px-3 py-2 rounded-xl border border-kyoto-border bg-white focus:outline-none focus:border-kyoto-matcha">
+                  <option value="餐飲美食">餐飲美食</option>
+                  <option value="交通移動">交通移動</option>
+                  <option value="門票和服">門票和服</option>
+                  <option value="購物伴手禮">購物伴手禮 (不計入6.5萬核心)</option>
+                  <option value="機票住宿">機票住宿</option>
+                  <option value="其他保險網卡">桃機接送/保險/eSIM</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs text-kyoto-muted mb-1">項目名稱 / 備註</label>
+              <input id="expTitle" type="text" required maxlength="200" placeholder="例如：一寸法師干貝鹽味拉麵、HARUKA車票"
+                     class="w-full px-3 py-2 rounded-xl border border-kyoto-border focus:outline-none focus:border-kyoto-matcha" />
+            </div>
+
+            <div class="grid grid-cols-5 gap-2">
+              <div class="col-span-2">
+                <label class="block text-xs text-kyoto-muted mb-1">幣別</label>
+                <select id="expCurrency" onchange="updateFormConvertedPreview()"
+                        class="w-full px-3 py-2 rounded-xl border border-kyoto-border bg-white font-semibold focus:outline-none focus:border-kyoto-matcha">
+                  <option value="JPY">JPY (日圓 ¥)</option>
+                  <option value="TWD">TWD (台幣 $)</option>
+                </select>
+              </div>
+              <div class="col-span-3">
+                <label class="block text-xs text-kyoto-muted mb-1">金額</label>
+                <input id="expAmount" type="number" step="any" min="0" required placeholder="輸入金額"
+                       oninput="updateFormConvertedPreview()"
+                       class="w-full px-3 py-2 rounded-xl border border-kyoto-border font-bold focus:outline-none focus:border-kyoto-matcha" />
+              </div>
+            </div>
+            <div id="formConvertedPreview" class="text-[11px] text-kyoto-matcha font-medium text-right h-4"></div>
+
+            <div class="grid grid-cols-2 gap-2.5">
+              <div>
+                <label class="block text-xs text-kyoto-muted mb-1">誰先付錢？</label>
+                <select id="expPayer" class="w-full px-3 py-2 rounded-xl border border-kyoto-border bg-white focus:outline-none focus:border-kyoto-matcha">
+                  <option value="A" id="payerOptA">旅伴 A 墊付</option>
+                  <option value="B" id="payerOptB">旅伴 B 墊付</option>
+                  <option value="POOL">公費錢包支付</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs text-kyoto-muted mb-1">如何分攤？</label>
+                <select id="expSplit" class="w-full px-3 py-2 rounded-xl border border-kyoto-border bg-white focus:outline-none focus:border-kyoto-matcha">
+                  <option value="EVEN">兩人平分 (50/50)</option>
+                  <option value="SELF">付款人自付 (個人買物)</option>
+                  <option value="OTHER">幫對方代墊 (100%算對方)</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="pt-2 flex items-center gap-2">
+              <button type="submit"
+                      class="flex-1 py-2.5 px-4 rounded-xl bg-kyoto-matcha hover:bg-kyoto-matchaLight text-white font-bold shadow-sm transition">
+                <i class="fa-solid fa-check mr-1"></i>儲存這筆帳目
+              </button>
+              <button type="button" id="cancelEditBtn" onclick="resetExpenseForm()"
+                      class="hidden py-2.5 px-3 rounded-xl bg-stone-200 hover:bg-stone-300 text-kyoto-ink font-medium transition">
+                取消
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Expense List & Action Toolbar -->
+        <div class="lg:col-span-8 bg-white rounded-2xl p-5 border border-kyoto-border shadow-sm space-y-4">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3 border-b border-kyoto-border">
+            <div class="flex items-center gap-2 flex-wrap">
+              <h3 class="text-base font-bold text-kyoto-ink">帳目明細清單</h3>
+              <select id="filterDaySelect" onchange="renderExpenseSystem()"
+                      class="text-xs px-2.5 py-1.5 rounded-lg border border-kyoto-border bg-kyoto-bg">
+                <option value="ALL">全部日期</option>
+                <option value="行前">行前預訂</option>
+                <option value="Day 1">Day 1 (1/10)</option>
+                <option value="Day 2">Day 2 (1/11)</option>
+                <option value="Day 3">Day 3 (1/12)</option>
+                <option value="Day 4">Day 4 (1/13)</option>
+                <option value="Day 5">Day 5 (1/14)</option>
+                <option value="Day 6">Day 6 (1/15)</option>
+              </select>
+              <select id="filterCatSelect" onchange="renderExpenseSystem()"
+                      class="text-xs px-2.5 py-1.5 rounded-lg border border-kyoto-border bg-kyoto-bg">
+                <option value="ALL">全部分類</option>
+                <option value="機票住宿">機票住宿</option>
+                <option value="餐飲美食">餐飲美食</option>
+                <option value="交通移動">交通移動</option>
+                <option value="門票和服">門票和服</option>
+                <option value="購物伴手禮">購物伴手禮</option>
+                <option value="其他保險網卡">保險/接送/網卡</option>
+              </select>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex items-center gap-1.5 flex-wrap">
+              <button onclick="loadSampleBudgetExpenses()"
+                      class="px-2.5 py-1.5 rounded-lg bg-kyoto-matchaPale hover:bg-kyoto-matcha hover:text-white text-kyoto-matcha text-xs font-semibold transition"
+                      title="載入6天完整預估車資、門票、和服與餐飲範本">
+                <i class="fa-solid fa-wand-magic-sparkles mr-1"></i>載入全行程預估範本
+              </button>
+              <button onclick="exportExpensesCSV()"
+                      class="px-2.5 py-1.5 rounded-lg bg-stone-100 hover:bg-stone-200 text-kyoto-ink text-xs font-medium transition">
+                <i class="fa-solid fa-file-csv mr-1"></i>匯出 CSV
+              </button>
+              <button onclick="copyExpenseSummary()"
+                      class="px-2.5 py-1.5 rounded-lg bg-stone-100 hover:bg-stone-200 text-kyoto-ink text-xs font-medium transition">
+                <i class="fa-regular fa-copy mr-1"></i>複製結算
+              </button>
+              <button onclick="openResetConfirmModal()"
+                      class="px-2.5 py-1.5 rounded-lg bg-red-50 hover:bg-red-100 text-kyoto-torii text-xs font-medium transition">
+                <i class="fa-solid fa-rotate-left mr-1"></i>重置為僅機酒
+              </button>
+            </div>
+          </div>
+
+          <!-- Expense Items List -->
+          <div id="expenseListContainer" class="divide-y divide-kyoto-border max-h-[540px] overflow-y-auto pr-1">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- =============================================================== -->
+    <!-- TAB 3: 行前清單、2026-2027 新法規與參考影片庫 (CHECKLIST & RULES) -->
+    <!-- =============================================================== -->
+    <section id="tabContent-checklist" class="hidden space-y-6">
+
+      <!-- 2026-2027 Must-Know New Regulations Grid -->
+      <div>
+        <h2 class="text-lg font-serif-tc font-bold text-kyoto-ink mb-3 flex items-center gap-2">
+          <i class="fa-solid fa-triangle-exclamation text-kyoto-torii"></i>
+          <span>2026–2027 赴日與京都最新法規必看重點</span>
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- Rule 1: 2026/11 Tax Refund -->
+          <div class="bg-white rounded-2xl p-4 border-l-4 border-l-kyoto-torii border border-kyoto-border shadow-sm">
+            <div class="flex items-center justify-between mb-1.5">
+              <span class="text-xs font-bold px-2 py-0.5 rounded bg-kyoto-toriiPale text-kyoto-torii">2026/11/01 正式實施</span>
+              <span class="text-xs text-kyoto-muted">關西機場回程必注意</span>
+            </div>
+            <h3 class="font-bold text-sm md:text-base text-kyoto-ink mb-1">🛍️日本退稅新制：「先付含稅價、機場 Kiosk 退稅」</h3>
+            <ul class="text-xs text-kyoto-muted space-y-1 list-disc list-inside">
+              <li>在 SOU・SOU、中村藤吉或藥妝店購物時，<strong>一律先付含 10% 消費稅總額</strong>，店員掃護照上傳雲端。</li>
+              <li><strong>全面取消免稅透明密封袋</strong>，戰利品可直接收納進行李箱（但出境前仍不可在日本拆封吃完）。</li>
+              <li><strong class="text-kyoto-torii">回程關鍵：</strong>1/15 抵關西機場後，<strong>去星宇櫃檯託運行李前</strong>，務必先推行李到出境大廳「海關稅務機台 (Kiosk)」掃護照完成核銷，10% 稅金將退回綁定信用卡！</li>
+            </ul>
+          </div>
+
+          <!-- Rule 2: Power Bank & Cordless Hair Iron -->
+          <div class="bg-white rounded-2xl p-4 border-l-4 border-l-amber-500 border border-kyoto-border shadow-sm">
+            <div class="flex items-center justify-between mb-1.5">
+              <span class="text-xs font-bold px-2 py-0.5 rounded bg-amber-100 text-amber-800">星宇航空 & 日本安檢嚴格新制</span>
+              <span class="text-xs text-kyoto-muted">違規將被沒收</span>
+            </div>
+            <h3 class="font-bold text-sm md:text-base text-kyoto-ink mb-1">🔋行動電源禁放頭頂櫃 ＆ 禁帶無線離子夾</h3>
+            <ul class="text-xs text-kyoto-muted space-y-1 list-disc list-inside">
+              <li><strong>行動電源：</strong>必須隨身放在<strong>座位前方椅袋或腳下隨身包</strong>，嚴禁放入頭頂行李櫃，且航程中<strong>全程禁止使用行動電源充電</strong>（星宇座位螢幕下有充電孔）。</li>
+              <li><strong class="text-kyoto-torii">無線離子夾/電捲棒禁令：</strong>凡內建不可拆卸鋰電池的無線美髮器，日本安檢<strong>手提與託運全面禁止攜帶出境</strong>！請帶「傳統插電線式」離子夾。</li>
+            </ul>
+          </div>
+
+          <!-- Rule 3: Kyoto Hotel Tax & Bus Luggage -->
+          <div class="bg-white rounded-2xl p-4 border-l-4 border-l-kyoto-matcha border border-kyoto-border shadow-sm">
+            <div class="flex items-center justify-between mb-1.5">
+              <span class="text-xs font-bold px-2 py-0.5 rounded bg-kyoto-matchaPale text-kyoto-matcha">2026/03 起調漲</span>
+              <span class="text-xs text-kyoto-muted">京都市政新規</span>
+            </div>
+            <h3 class="font-bold text-sm md:text-base text-kyoto-ink mb-1">🏨京都市住宿稅新制 ＆ 市巴士禁帶大行李</h3>
+            <ul class="text-xs text-kyoto-muted space-y-1 list-disc list-inside">
+              <li><strong>住宿稅現場付：</strong>四條靜鐵 PREZIO 5晚房價約 NT$7,901（每人每晚未滿 ¥6,000 區間為 ¥200/人/晚），兩人 5 晚共約 <strong>¥2,000</strong> 於入住時櫃檯支付。</li>
+              <li><strong>大行李請搭地鐵：</strong>京都市巴士嚴禁攜帶大型行李箱上車；Day 1 與 Day 6 往返京都站請搭<strong>地下鐵烏丸線（僅2站、4分鐘，走23號電梯出口）</strong>。</li>
+            </ul>
+          </div>
+
+          <!-- Rule 4: Gion Private Alleys & Shrine Etiquette -->
+          <div class="bg-white rounded-2xl p-4 border-l-4 border-l-blue-600 border border-kyoto-border shadow-sm">
+            <div class="flex items-center justify-between mb-1.5">
+              <span class="text-xs font-bold px-2 py-0.5 rounded bg-blue-100 text-blue-800">當地參拜與禮儀</span>
+              <span class="text-xs text-kyoto-muted">違者罰款 ¥10,000</span>
+            </div>
+            <h3 class="font-bold text-sm md:text-base text-kyoto-ink mb-1">🚫祇園私道禁入令・音羽瀑布與御金神社規矩</h3>
+            <ul class="text-xs text-kyoto-muted space-y-1 list-disc list-inside">
+              <li><strong>祇園花見小路：</strong>主幹道可自由散步拍照，但兩側立牌的「私人小巷弄」嚴禁進入拍照（違者罰 ¥10,000）。</li>
+              <li><strong>清水寺音羽瀑布：</strong>三道泉水（學業、戀愛、健康）<strong>只能選一道喝一口</strong>，貪心喝兩道以上願望會失效。</li>
+              <li><strong>御金神社：</strong>手水舍已全面改為<strong>禁止洗錢</strong>，請改買銀杏繪馬與福錢御守祈福。</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Interactive Pre-Trip Checklist -->
+      <div class="bg-white rounded-2xl p-5 border border-kyoto-border shadow-sm">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4 pb-3 border-b border-kyoto-border">
+          <div>
+            <h2 class="text-lg font-serif-tc font-bold text-kyoto-ink flex items-center gap-2">
+              <i class="fa-solid fa-list-check text-kyoto-matcha"></i>
+              <span>行前預訂時間軸與必備物品檢核表</span>
+            </h2>
+            <p class="text-xs text-kyoto-muted">勾選進度會自動儲存在您的手機/瀏覽器中</p>
+          </div>
+          <div class="flex items-center gap-3">
+            <span id="checklistProgressText" class="text-xs font-bold text-kyoto-matcha">完成度 0/14</span>
+            <button onclick="resetChecklist()" class="text-xs text-kyoto-muted hover:text-kyoto-torii underline">全部取消勾選</button>
+          </div>
+        </div>
+
+        <div id="checklistContainer" class="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+
+      <!-- 8 YouTube Reference Videos Library -->
+      <div class="bg-white rounded-2xl p-5 border border-kyoto-border shadow-sm">
+        <h2 class="text-lg font-serif-tc font-bold text-kyoto-ink mb-3 flex items-center gap-2">
+          <i class="fa-brands fa-youtube text-red-600"></i>
+          <span>本行程整合之 8 部京都攻略 YouTube 影片索引</span>
+        </h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
+          <a href="https://www.youtube.com/watch?v=X_SpsfNuqjk" target="_blank" rel="noopener noreferrer"
+             class="p-3 rounded-xl border border-kyoto-border hover:border-kyoto-matcha hover:bg-kyoto-matchaPale/30 transition flex flex-col justify-between">
+            <div>
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-red-100 text-red-700">創世小夫妻</span>
+              <div class="font-bold text-kyoto-ink mt-1.5">京都4天3夜懶人包行程</div>
+              <p class="text-kyoto-muted mt-1">白色售票機取HARUKA、清水寺和服避雷、京都站4大伴手禮開箱</p>
+            </div>
+            <span class="text-kyoto-matcha font-semibold mt-2 inline-flex items-center gap-1">點此觀看影片 <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i></span>
+          </a>
+
+          <a href="https://www.youtube.com/watch?v=F6lPJ_0nO1A" target="_blank" rel="noopener noreferrer"
+             class="p-3 rounded-xl border border-kyoto-border hover:border-kyoto-matcha hover:bg-kyoto-matchaPale/30 transition flex flex-col justify-between">
+            <div>
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-red-100 text-red-700">懶散日記 Lazy TV</span>
+              <div class="font-bold text-kyoto-ink mt-1.5">京都嵐山必逛景點＆爆吃6家美食</div>
+              <p class="text-kyoto-muted mt-1">御髮神社、湯葉烏龍麵、茅草屋抹茶法式吐司、中村屋炸肉餅、1分鐘鯛魚燒</p>
+            </div>
+            <span class="text-kyoto-matcha font-semibold mt-2 inline-flex items-center gap-1">點此觀看影片 <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i></span>
+          </a>
+
+          <a href="https://www.youtube.com/watch?v=u_plWgGadmA" target="_blank" rel="noopener noreferrer"
+             class="p-3 rounded-xl border border-kyoto-border hover:border-kyoto-matcha hover:bg-kyoto-matchaPale/30 transition flex flex-col justify-between">
+            <div>
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-red-100 text-red-700">YYYYmanda :)</span>
+              <div class="font-bold text-kyoto-ink mt-1.5">京阪抹茶之旅・宇治半日遊</div>
+              <p class="text-kyoto-muted mt-1">丸久小山園採買、here咖啡、中村藤吉本店竹筒芭菲、御金神社、鴨肉沾麵</p>
+            </div>
+            <span class="text-kyoto-matcha font-semibold mt-2 inline-flex items-center gap-1">點此觀看影片 <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i></span>
+          </a>
+
+          <a href="https://www.youtube.com/watch?v=bG-ohMZZTzM" target="_blank" rel="noopener noreferrer"
+             class="p-3 rounded-xl border border-kyoto-border hover:border-kyoto-matcha hover:bg-kyoto-matchaPale/30 transition flex flex-col justify-between">
+            <div>
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-red-100 text-red-700">Travel Seeker</span>
+              <div class="font-bold text-kyoto-ink mt-1.5">時間不夠怎麼玩京都！東西南北路線</div>
+              <p class="text-kyoto-muted mt-1">嵐山小火車1-2月停駛提醒、清水寺下坡順走動線、伏見宇治串聯</p>
+            </div>
+            <span class="text-kyoto-matcha font-semibold mt-2 inline-flex items-center gap-1">點此觀看影片 <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i></span>
+          </a>
+
+          <a href="https://www.youtube.com/watch?v=QVQsHxLXFwo" target="_blank" rel="noopener noreferrer"
+             class="p-3 rounded-xl border border-kyoto-border hover:border-kyoto-matcha hover:bg-kyoto-matchaPale/30 transition flex flex-col justify-between">
+            <div>
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-red-100 text-red-700">瑪茲一 Matsui</span>
+              <div class="font-bold text-kyoto-ink mt-1.5">京都旅遊全攻略 18個精選景點</div>
+              <p class="text-kyoto-muted mt-1">西本願寺400年銀杏、二條城大政奉還、金閣寺、北野天滿宮深度導覽</p>
+            </div>
+            <span class="text-kyoto-matcha font-semibold mt-2 inline-flex items-center gap-1">點此觀看影片 <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i></span>
+          </a>
+
+          <a href="https://www.youtube.com/watch?v=FIj6y3U2QwM" target="_blank" rel="noopener noreferrer"
+             class="p-3 rounded-xl border border-kyoto-border hover:border-kyoto-matcha hover:bg-kyoto-matchaPale/30 transition flex flex-col justify-between">
+            <div>
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-red-100 text-red-700">R榮</span>
+              <div class="font-bold text-kyoto-ink mt-1.5">兩日走遍京都10大景點＆精選美食</div>
+              <p class="text-kyoto-muted mt-1">日東堂牛奶瓶咖啡、平等寺貓狗寵物御守、新風館、京燒肉弘和牛</p>
+            </div>
+            <span class="text-kyoto-matcha font-semibold mt-2 inline-flex items-center gap-1">點此觀看影片 <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i></span>
+          </a>
+
+          <a href="https://www.youtube.com/watch?v=fKCaQ4-19Kk" target="_blank" rel="noopener noreferrer"
+             class="p-3 rounded-xl border border-kyoto-border hover:border-kyoto-matcha hover:bg-kyoto-matchaPale/30 transition flex flex-col justify-between">
+            <div>
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-red-100 text-red-700">懶散日記 Lazy TV</span>
+              <div class="font-bold text-kyoto-ink mt-1.5">京都清水寺一日攻略＆爆吃7家美食</div>
+              <p class="text-kyoto-muted mt-1">檀王法林寺招福黑貓、一寸法師干貝鹽拉麵、GOKAGO少糖抹茶、京うな和鰻魚飯</p>
+            </div>
+            <span class="text-kyoto-matcha font-semibold mt-2 inline-flex items-center gap-1">點此觀看影片 <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i></span>
+          </a>
+
+          <a href="https://www.youtube.com/watch?v=zKpfi7zY_pg" target="_blank" rel="noopener noreferrer"
+             class="p-3 rounded-xl border border-kyoto-border hover:border-kyoto-matcha hover:bg-kyoto-matchaPale/30 transition flex flex-col justify-between">
+            <div>
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-red-100 text-red-700">Kelly 隨和的凱莉</span>
+              <div class="font-bold text-kyoto-ink mt-1.5">京都大阪六天五夜自由行</div>
+              <p class="text-kyoto-muted mt-1">京都站貝だし麺きた田蛤蜊拉麵、音羽瀑布禁忌、錦市場草莓大福、SOU・SOU退稅</p>
+            </div>
+            <span class="text-kyoto-matcha font-semibold mt-2 inline-flex items-center gap-1">點此觀看影片 <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i></span>
+          </a>
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- ================= MODALS & TOAST NOTIFICATION ================= -->
+
+  <!-- Toast Notification -->
+  <div id="toastBox" class="fixed bottom-6 right-6 z-50 hidden bg-kyoto-ink text-white px-4 py-3 rounded-xl shadow-lg text-xs md:text-sm font-medium flex items-center gap-2">
+    <i class="fa-solid fa-circle-check text-emerald-400"></i>
+    <span id="toastMessage">已儲存</span>
+  </div>
+
+  <!-- Modal 1: Hotel Elevator & Info Modal -->
+  <div id="hotelInfoModal" class="fixed inset-0 z-50 hidden bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-lg w-full p-5 shadow-xl border border-kyoto-border space-y-4">
+      <div class="flex items-center justify-between border-b border-kyoto-border pb-3">
+        <h3 class="text-base md:text-lg font-bold text-kyoto-ink flex items-center gap-2">
+          <i class="fa-solid fa-hotel text-kyoto-matcha"></i>
+          <span>京都四條靜鐵 PREZIO 酒店・出入口與周邊攻略</span>
+        </h3>
+        <button onclick="closeModal('hotelInfoModal')" class="text-kyoto-muted hover:text-kyoto-ink text-lg">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      <div class="text-xs md:text-sm space-y-3 text-kyoto-ink">
+        <div class="bg-kyoto-matchaPale/60 p-3 rounded-xl border border-kyoto-matcha/20">
+          <div class="font-bold text-kyoto-matcha">📍 飯店地址與房型重點</div>
+          <p class="mt-1">京都市中京區西洞院通錦小路上る古西町 452（正對面即是 7-11）</p>
+          <p class="text-xs text-kyoto-torii font-semibold mt-1">★ 訂房務必選「Standard Double (標準雙人房 18m²)」，才具備獨立淋浴洗身區＋浴缸的日式乾濕分離大浴室！（勿選附按摩椅房型）</p>
+        </div>
+
+        <div class="space-y-2">
+          <div class="font-bold">🚇 地鐵「四條站」／阪急「烏丸站」最省力出口：</div>
+          <div class="p-2.5 rounded-xl bg-stone-100">
+            <span class="font-bold text-kyoto-torii">🧳 拖大行李時（Day 1 入住、Day 6 退房）：</span>
+            <p class="text-xs mt-0.5">地鐵四條站下車後，走地下連通道至阪急烏丸站 <strong>「23號出口（SUINA室町大樓，有大型電梯）」</strong> 或 <strong>「22號出口（LAQUE電梯）」</strong> 上到地面，沿四條通往西走到「西洞院通」右轉，平坦人行道推車 6 分鐘即達。</p>
+          </div>
+          <div class="p-2.5 rounded-xl bg-stone-100">
+            <span class="font-bold text-kyoto-matcha">🚶 平日空手出門時：</span>
+            <p class="text-xs mt-0.5">直接走最近的 <strong>「24號出口」</strong>（有上行手扶梯與樓梯），步行 5 分鐘即達。</p>
+          </div>
+        </div>
+
+        <div class="text-xs text-kyoto-muted">
+          <strong>周邊神級機能：</strong>出門右轉直走 4 分鐘到「丸久小山園西洞院店 & here Kyoto」；出門左轉沿錦小路通直走 8 分鐘到「錦市場」；往南走 9 分鐘到「平等寺（寵物御守）」。
+        </div>
+      </div>
+      <div class="flex justify-end gap-2 pt-2">
+        <a href="https://www.google.com/maps/search/?api=1&query=Shizutetsu+Hotel+Prezio+Kyoto+Shijo" target="_blank" rel="noopener noreferrer"
+           class="px-4 py-2 rounded-xl bg-kyoto-matcha text-white text-xs font-bold">開啟 Google Maps</a>
+        <button onclick="closeModal('hotelInfoModal')" class="px-4 py-2 rounded-xl bg-stone-200 text-kyoto-ink text-xs font-semibold">關閉</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 2: Flight & Tax-Free Info Modal -->
+  <div id="flightInfoModal" class="fixed inset-0 z-50 hidden bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-lg w-full p-5 shadow-xl border border-kyoto-border space-y-4">
+      <div class="flex items-center justify-between border-b border-kyoto-border pb-3">
+        <h3 class="text-base md:text-lg font-bold text-kyoto-ink flex items-center gap-2">
+          <i class="fa-solid fa-plane text-kyoto-torii"></i>
+          <span>星宇航空班表 & 關西機場出入境攻略</span>
+        </h3>
+        <button onclick="closeModal('flightInfoModal')" class="text-kyoto-muted hover:text-kyoto-ink text-lg">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      <div class="text-xs md:text-sm space-y-3">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+          <div class="p-3 rounded-xl bg-kyoto-bg border border-kyoto-border">
+            <div class="text-xs text-kyoto-muted">去程｜2027/01/10 (週日)</div>
+            <div class="font-bold text-kyoto-ink mt-0.5">星宇 JX820 (直飛)</div>
+            <div class="text-kyoto-matcha font-bold mt-1">07:40 TPE → 11:10 KIX</div>
+            <div class="text-[11px] text-kyoto-muted mt-1">建議 05:15–05:30 抵桃機櫃檯</div>
+          </div>
+          <div class="p-3 rounded-xl bg-kyoto-bg border border-kyoto-border">
+            <div class="text-xs text-kyoto-muted">回程｜2027/01/15 (週五)</div>
+            <div class="font-bold text-kyoto-ink mt-0.5">星宇 JX823 (直飛)</div>
+            <div class="text-kyoto-torii font-bold mt-1">14:00 KIX → 16:20 TPE</div>
+            <div class="text-[11px] text-kyoto-muted mt-1">搭 09:30/10:00 HARUKA 往機場</div>
+          </div>
+        </div>
+        <div class="p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs space-y-1">
+          <div class="font-bold text-amber-900">💡 關西機場兩大實戰秘訣：</div>
+          <p>1. <strong>Day 1 白色售票機取 HARUKA：</strong>若 JR 綠色售票機大排長龍，直接用旁邊「白色售票機」免掃護照即可快速劃第 4 車廂指定席（走人工通道進站）。</p>
+          <p>2. <strong>Day 6 託運前先刷海關退稅 Kiosk：</strong>2026/11 新制上路，抵關西機場出境大廳後，<strong>先去海關 Kiosk 機台掃護照完成退稅核銷</strong>，再去星宇航空櫃檯託運行李！</p>
+        </div>
+      </div>
+      <div class="flex justify-end pt-2">
+        <button onclick="closeModal('flightInfoModal')" class="px-4 py-2 rounded-xl bg-kyoto-matcha text-white text-xs font-semibold">我知道了</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 3: Reset Expense Confirm Modal -->
+  <div id="resetConfirmModal" class="fixed inset-0 z-50 hidden bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-sm w-full p-5 shadow-xl border border-kyoto-border space-y-4">
+      <h3 class="text-base font-bold text-kyoto-ink flex items-center gap-2">
+        <i class="fa-solid fa-triangle-exclamation text-kyoto-torii"></i>
+        <span>確定要重置帳本嗎？</span>
+      </h3>
+      <p class="text-xs text-kyoto-muted">
+        這將會清除您新增的日常帳目，並恢復為「僅保留已確定之星宇機票 (NT$28,850)、四條靜鐵 PREZIO 5晚住宿 (NT$7,901) 與京都市住宿稅 (¥2,000)」的初始狀態。
+      </p>
+      <div class="flex justify-end gap-2">
+        <button onclick="closeModal('resetConfirmModal')" class="px-3.5 py-2 rounded-xl bg-stone-200 text-kyoto-ink text-xs font-semibold">取消</button>
+        <button onclick="confirmResetToFixedOnly()" class="px-3.5 py-2 rounded-xl bg-kyoto-torii text-white text-xs font-bold">確定重置</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 4: Kyoto Live Weather & 7-Day Forecast Modal -->
+  <div id="weatherInfoModal" class="fixed inset-0 z-50 hidden bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-2xl w-full p-5 shadow-xl border border-kyoto-border space-y-4 max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between border-b border-kyoto-border pb-3">
+        <div>
+          <h3 class="text-base md:text-lg font-bold text-kyoto-ink flex items-center gap-2">
+            <i class="fa-solid fa-cloud-sun text-kyoto-matcha"></i>
+            <span>京都市即時天氣與未來 7 日預報</span>
+          </h3>
+          <p class="text-[11px] text-kyoto-muted mt-0.5">座標：京都市中京區四條烏丸 (35.0116°N, 135.7681°E)｜資料來源：Open-Meteo API</p>
+        </div>
+        <button onclick="closeModal('weatherInfoModal')" class="text-kyoto-muted hover:text-kyoto-ink text-lg">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- Current Weather Banner -->
+      <div class="bg-kyoto-matcha text-white rounded-2xl p-4 flex items-center justify-between">
+        <div>
+          <div class="text-xs text-white/80">目前京都市中心實況</div>
+          <div class="text-2xl md:text-3xl font-extrabold mt-0.5" id="modalWeatherCurrentTemp">--°C</div>
+          <div class="text-xs text-white/85 mt-1" id="modalWeatherCurrentDesc">體感 --°C ｜ 濕度 --% ｜ 風速 -- km/h</div>
+        </div>
+        <div class="text-5xl" id="modalWeatherCurrentIcon">⛅</div>
+      </div>
+
+      <!-- 7-Day Forecast Grid -->
+      <div>
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-xs font-bold text-kyoto-ink">📅 京都未來 7 日高低溫與降雨/降雪機率</span>
+          <button onclick="fetchKyotoWeather(true)" class="text-xs text-kyoto-matcha font-bold hover:underline">
+            <i class="fa-solid fa-arrows-rotate mr-0.5"></i>重新整理
+          </button>
+        </div>
+        <div id="weatherForecastGrid" class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-2 text-center">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+
+      <!-- Winter Clothing & Kimono Advice -->
+      <div class="bg-amber-50 border border-amber-200 rounded-xl p-3.5 text-xs text-kyoto-ink space-y-1.5">
+        <div class="font-bold text-amber-900">🧣 1/10～1/15 京都 1 月中旬氣候與和服保暖鐵則：</div>
+        <p>• <strong>1 月平均氣溫：</strong>清晨與夜間約 <strong>1°C ～ 3°C</strong>，白天約 <strong>8°C ～ 10°C</strong>。日本電車、百貨與餐廳室內暖氣極強，建議採「洋蔥式穿搭（發熱衣＋薄毛衣或刷毛大學T＋防風長版羽絨或羊毛大衣）」。</p>
+        <p>• <strong>Day 5 (1/14) 和服隱形保暖：</strong>裡面務必穿<strong>「大 U 領或深 V 領發熱衣」</strong>（避免領口露出和服後頸）＋<strong>「九分發熱內搭褲」</strong>，並在後腰與腳底貼暖暖包！</p>
+      </div>
+
+      <div class="flex justify-end pt-1">
+        <button onclick="closeModal('weatherInfoModal')" class="px-4 py-2 rounded-xl bg-kyoto-matcha text-white text-xs font-semibold">關閉視窗</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 5: Google Sheets Cloud Sync Setup Wizard Modal -->
+  <div id="sheetsSyncModal" class="fixed inset-0 z-50 hidden bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-2xl w-full p-5 shadow-xl border border-kyoto-border space-y-4 max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between border-b border-kyoto-border pb-3">
+        <div>
+          <h3 class="text-base md:text-lg font-bold text-kyoto-ink flex items-center gap-2">
+            <i class="fa-solid fa-table text-kyoto-matcha"></i>
+            <span>Google 試算表 (Google Sheets) 雙向雲端記帳綁定</span>
+          </h3>
+          <p class="text-[11px] text-kyoto-muted mt-0.5">免綁信用卡、完全免費！1 分鐘將您的 Google 試算表變成雙人手機同步帳本</p>
+        </div>
+        <button onclick="closeModal('sheetsSyncModal')" class="text-kyoto-muted hover:text-kyoto-ink text-lg">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- URL Input Box -->
+      <div class="bg-kyoto-matchaPale/60 border border-kyoto-matcha/30 rounded-xl p-4 space-y-2.5">
+        <label class="block text-xs font-bold text-kyoto-matcha">
+          🔗 完成下方步驟後，將您的 Google Apps Script「網頁應用程式網址」貼在這裡：
+        </label>
+        <div class="flex flex-col sm:flex-row gap-2">
+          <input id="gasWebAppUrlInput" type="url" placeholder="https://script.google.com/macros/s/AKfycb.../exec"
+                 class="flex-1 px-3 py-2 rounded-xl border border-kyoto-border bg-white text-xs md:text-sm focus:outline-none focus:border-kyoto-matcha" />
+          <button onclick="saveAndTestGasUrl()"
+                  class="px-4 py-2 rounded-xl bg-kyoto-matcha hover:bg-kyoto-matchaLight text-white text-xs font-bold shadow-sm transition shrink-0">
+            <i class="fa-solid fa-floppy-disk mr-1"></i>儲存並測試同步
+          </button>
+        </div>
+        <div class="flex items-center justify-between text-xs pt-1">
+          <label class="inline-flex items-center gap-2 cursor-pointer text-kyoto-ink">
+            <input id="autoSyncToggle" type="checkbox" checked onchange="toggleAutoSyncOption(this.checked)"
+                   class="w-4 h-4 accent-kyoto-matcha rounded" />
+            <span>每次新增 / 修改 / 刪除帳目時，自動同步寫入 Google 試算表</span>
+          </label>
+          <button onclick="disconnectGoogleSheet()" class="text-kyoto-torii hover:underline font-semibold">解除綁定</button>
+        </div>
+        <div id="gasStatusFeedback" class="text-xs font-bold text-kyoto-matcha hidden"></div>
+      </div>
+
+      <!-- 3-Step Instructions -->
+      <div class="space-y-3 text-xs text-kyoto-ink">
+        <div class="font-bold text-sm">🛠️ 1 分鐘設定步驟（只需設定一次）：</div>
+
+        <div class="p-3 rounded-xl bg-kyoto-bg border border-kyoto-border space-y-1">
+          <div class="font-bold text-kyoto-matcha">步驟 1：建立空白 Google 試算表並開啟 Apps Script</div>
+          <p>1. 點擊前往 <a href="https://sheets.new" target="_blank" rel="noopener noreferrer" class="text-kyoto-torii font-bold underline">https://sheets.new</a> 建立一份空白試算表（可命名為「2027京都自由行記帳」）。</p>
+          <p>2. 點選試算表頂端選單的 <strong>「擴充功能 (Extensions)」→「Apps Script」</strong>。</p>
+        </div>
+
+        <div class="p-3 rounded-xl bg-kyoto-bg border border-kyoto-border space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-kyoto-matcha">步驟 2：一鍵複製下方程式碼並貼入 Apps Script</span>
+            <button onclick="copyAppsScriptCode()" id="copyScriptBtn"
+                    class="px-3 py-1 rounded-lg bg-kyoto-matcha text-white font-bold hover:bg-kyoto-matchaLight transition">
+              <i class="fa-regular fa-copy mr-1"></i>一鍵複製程式碼
+            </button>
+          </div>
+          <p class="text-kyoto-muted">將 Apps Script 編輯器裡原本的 <code>function myFunction() {}</code> 刪掉，貼上下方程式碼並按 <code>Ctrl+S</code>（或磁片圖示）儲存：</p>
+          <pre id="appsScriptCodeBlock" class="bg-stone-900 text-emerald-300 p-3 rounded-xl text-[11px] overflow-x-auto max-h-44 select-all">function doGet(e) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName('京都記帳') || ss.insertSheet('京都記帳');
+  var data = sheet.getDataRange().getValues();
+  var expenses = [];
+  for (var i = 1; i &lt; data.length; i++) {
+    var row = data[i];
+    if (!row[0] || row[0] === 'SUMMARY') continue;
+    expenses.push({
+      id: String(row[0]),
+      day: String(row[1]),
+      category: String(row[2]),
+      title: String(row[3]),
+      currency: String(row[4]),
+      amount: Number(row[5]),
+      payer: String(row[7]),
+      split: String(row[8])
+    });
+  }
+  var metaSheet = ss.getSheetByName('設定');
+  var meta = {};
+  if (metaSheet &amp;&amp; metaSheet.getLastRow() &gt;= 2) {
+    var m = metaSheet.getRange(2, 1, 1, 3).getValues()[0];
+    meta = { A: m[0], B: m[1], rate: Number(m[2]) };
+  }
+  return ContentService.createTextOutput(JSON.stringify({ status: 'ok', expenses: expenses, meta: meta }))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+function doPost(e) {
+  var payload = JSON.parse(e.postData.contents);
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName('京都記帳') || ss.insertSheet('京都記帳');
+  sheet.clearContents();
+  sheet.appendRow(['ID', '所屬日期', '支出分類', '項目名稱', '幣別', '原始金額', '折合台幣(NT$)', '墊付代碼', '分攤代碼', '墊付人顯示', '分攤說明', '同步時間']);
+  var rate = Number(payload.rate) || 0.215;
+  var names = payload.names || { A: '旅伴 A', B: '旅伴 B' };
+  var list = payload.expenses || [];
+  var nowStr = Utilities.formatDate(new Date(), 'Asia/Taipei', 'yyyy-MM-dd HH:mm');
+  var coreTwd = 0;
+  var shopTwd = 0;
+  for (var i = 0; i &lt; list.length; i++) {
+    var it = list[i];
+    var twd = it.currency === 'JPY' ? Math.round(Number(it.amount) * rate) : Math.round(Number(it.amount));
+    if (it.category === '購物伴手禮') shopTwd += twd; else coreTwd += twd;
+    var pLabel = it.payer === 'A' ? names.A : (it.payer === 'B' ? names.B : '公費錢包');
+    var sLabel = it.split === 'EVEN' ? '兩人平分' : (it.split === 'SELF' ? '個人自付' : '代墊對方');
+    sheet.appendRow([it.id, it.day, it.category, it.title, it.currency, it.amount, twd, it.payer, it.split, pLabel, sLabel, nowStr]);
+  }
+  sheet.appendRow(['SUMMARY', '', '核心旅費合計(不含購物)', '', 'TWD', '', coreTwd, '', '', '購物合計 NT$' + shopTwd, '總花費 NT$' + (coreTwd + shopTwd), nowStr]);
+  var metaSheet = ss.getSheetByName('設定') || ss.insertSheet('設定');
+  metaSheet.clearContents();
+  metaSheet.appendRow(['旅伴A姓名', '旅伴B姓名', '換算匯率']);
+  metaSheet.appendRow([names.A, names.B, rate]);
+  return ContentService.createTextOutput(JSON.stringify({ status: 'ok', count: list.length }))
+    .setMimeType(ContentService.MimeType.JSON);
+}</pre>
+        </div>
+
+        <div class="p-3 rounded-xl bg-kyoto-bg border border-kyoto-border space-y-1">
+          <div class="font-bold text-kyoto-matcha">步驟 3：部署為「網頁應用程式 (Web app)」</div>
+          <p>1. 點擊右上角藍色按鈕 <strong>「部署 (Deploy)」→「新增部署作業 (New deployment)」</strong>。</p>
+          <p>2. 點選左上角齒輪圖示 → 選擇 <strong>「網頁應用程式 (Web app)」</strong>。</p>
+          <p>3. 「執行身分」選 <strong>「我 (Me)」</strong>；<strong class="text-kyoto-torii">「誰可以存取 (Who has access)」請務必選擇「所有人 (Anyone)」</strong>。</p>
+          <p>4. 點擊「部署」並完成授權（若跳出「Google 尚未驗證」，點左下角「進階」→「前往專案 (不安全)」→「允許」）。</p>
+          <p>5. 複製產生的 <strong>「網頁應用程式網址 (`https://script.google.com/macros/s/.../exec`)」</strong> 貼回上方輸入框即完成！</p>
+          <p class="text-kyoto-torii font-semibold">🔒 這個網址等同帳本的鑰匙：任何拿到網址的人都能讀寫帳目，請只分享給旅伴，不要貼到公開的地方。</p>
+        </div>
+      </div>
+
+      <div class="flex justify-end pt-1">
+        <button onclick="closeModal('sheetsSyncModal')" class="px-4 py-2 rounded-xl bg-stone-200 text-kyoto-ink text-xs font-semibold">關閉</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= APPLICATION JAVASCRIPT ================= -->
+  <script>
+    // =========================================================================
+    // 1. COMPLETE 6-DAY ITINERARY DATA (2027/01/10 - 01/15)
+    // =========================================================================
+    const HOTEL_COORDS = [35.0049, 135.7544];
+    const HOTEL_QUERY = "Shizutetsu Hotel Prezio Kyoto Shijo";
+
+    const ITINERARY_DATA = [
+      {
+        day: 1,
+        dateStr: "1/10 (週日)",
+        title: "星宇早班機抵京都・錦市場、SOU・SOU、Yodobashi (GU) 與車站夜景",
+        ticketBadge: "HARUKA 單程優惠票 ＋ 刷 ICOCA",
+        weatherTip: "11:10 落地關西，下午直奔錦市場與京都站 Yodobashi 5F GU 補齊冬裝",
+        stops: [
+          {
+            time: "11:10",
+            name: "關西國際機場 (KIX) 入境 & 取 HARUKA 車票",
+            category: "交通",
+            lat: 34.4320,
+            lng: 135.2304,
+            mapQuery: "Kansai International Airport",
+            originQuery: "Kansai International Airport",
+            transportFromPrev: "搭乘星宇航空 JX820（07:40 桃園起飛 → 11:10 抵達關西機場第一航廈）",
+            estCostCurrency: "JPY",
+            estCostAmount: 4400,
+            estCostNote: "HARUKA 單程票 ¥2,200×2人",
+            expCat: "交通移動",
+            tips: "【創世小夫妻實戰秘笈】入境領完行李到 JR 車站，若綠色售票機排隊太長，直接去旁邊「白色售票機」免掃護照即可快速劃位第 4 車廂指定席（走人工改札口進站）！建議搭 12:14 或 12:44 班次直達京都車站。"
+          },
+          {
+            time: "14:05",
+            name: "京都四條靜鐵 PREZIO 酒店 (寄放行李 / Check-in)",
+            category: "住宿",
+            lat: 35.0049,
+            lng: 135.7544,
+            mapQuery: "Shizutetsu Hotel Prezio Kyoto Shijo",
+            originQuery: "Kyoto Station",
+            transportFromPrev: "從「京都站」轉乘地下鐵烏丸線（往國際會館）2 站（4分鐘，¥220/人）至「四條站」，走地下連通道至阪急烏丸站「23號出口（SUINA室町大型電梯）」上地面，往西走至西洞院通右轉步行 6 分鐘即達。",
+            estCostCurrency: "JPY",
+            estCostAmount: 440,
+            estCostNote: "地鐵烏丸線 ¥220×2人",
+            expCat: "交通移動",
+            tips: "【飯店位置優勢】18m² 標準雙人房可同時攤平兩個大行李箱，且為獨立淋浴區＋大浴缸的日式乾濕分離衛浴！正對面就是 7-11，放下行李立刻輕鬆出門。"
+          },
+          {
+            time: "14:50",
+            name: "錦市場 ＆ SOU・SOU 一條街 ＆ 新京極商圈",
+            category: "購物",
+            lat: 35.0050,
+            lng: 135.7649,
+            mapQuery: "Nishiki Market Kyoto",
+            originQuery: "Shizutetsu Hotel Prezio Kyoto Shijo",
+            transportFromPrev: "從四條靜鐵 PREZIO 大門出來左轉，沿著「錦小路通」一路往東直走 8 分鐘（約 650m）直接進入錦市場西側入口！",
+            estCostCurrency: "JPY",
+            estCostAmount: 3500,
+            estCostNote: "草莓大福、抹茶飲與香袋預算",
+            expCat: "餐飲美食",
+            tips: "【Kelly & YYYYmanda攻略】① 必吃草莓與白葡萄大福、喝山政小山園微甜抹茶、去「喜代源」做自選3種香味的客製化香袋；② 避雷一串 ¥1,200 偏鹹的低CP值牛肉串；③ 走到錦市場東端錦天滿宮旁右轉就是「SOU・SOU 一條街」（9間主題店集中，先付10%含稅價並掃護照登錄雲端免稅）。"
+          },
+          {
+            time: "16:45",
+            name: "幸福鬆餅 (A Happy Pancake 京都店)",
+            category: "美食",
+            lat: 35.0062,
+            lng: 135.7661,
+            mapQuery: "A Happy Pancake Kyoto",
+            originQuery: "Nishiki Tenmangu Shrine Kyoto",
+            transportFromPrev: "從 SOU・SOU 一條街／新京極步行 3 分鐘即達（位於御幸町通）。",
+            estCostCurrency: "JPY",
+            estCostAmount: 3200,
+            estCostNote: "甜鹹舒芙蕾鬆餅各一份",
+            expCat: "餐飲美食",
+            tips: "【預約鐵則】雲朵般綿密的舒芙蕾鬆餅，推薦點一份「蜂蜜奶油甜鬆餅」＋一份「蘑菇歐姆蛋全麥鹹鬆餅」兩人分食！記得在出發前 2 週（2026/12/27）上官網線上訂位免排隊。"
+          },
+          {
+            time: "18:00",
+            name: "京都 Yodobashi 友都八喜（5F GU ＆ B2 LOPIA 大超市）",
+            category: "購物",
+            lat: 34.9877,
+            lng: 135.7593,
+            mapQuery: "Kyoto Yodobashi",
+            originQuery: "Shijo Station Kyoto",
+            transportFromPrev: "從地鐵「四條站」搭烏丸線 2 站（4分鐘，¥220/人）回「京都站」，免出地面吹風，直接走地下街 Porta 連通道直通京都 Yodobashi B2！",
+            estCostCurrency: "JPY",
+            estCostAmount: 440,
+            estCostNote: "地鐵烏丸線 ¥220×2人",
+            expCat: "交通移動",
+            tips: "【樓層必逛重點】① 5樓是「GU 京都 Yodobashi 店」與 UNIQLO（注意：5F GU 營業時間為 10:00–21:00，請先逛 5F）；② 1～3樓電器相機賣場（營業至22:00）；③ B2「LOPIA 超市」買日本新鮮大草莓、零食與飲料超便宜（⚠️注意：B2 LOPIA 超市僅收現金！）。"
+          },
+          {
+            time: "20:30",
+            name: "晚餐：貝だし麺 きた田（蛤蜊拉麵）或 10F 拉麵小路",
+            category: "美食",
+            lat: 34.9871,
+            lng: 135.7568,
+            mapQuery: "Kaidashimen Kitada Kyoto",
+            originQuery: "Kyoto Yodobashi",
+            transportFromPrev: "從京都 Yodobashi 大門出來往西步行 3 分鐘即達「貝だし麺 きた田」（或走回京都車站 10F 拉麵小路吃「麵匠たか松」全麥沾麵）。",
+            estCostCurrency: "JPY",
+            estCostAmount: 2400,
+            estCostNote: "雙人拉麵晚餐約 ¥2,400",
+            expCat: "餐飲美食",
+            tips: "【Kelly 激推高分名店】「貝だし麺 きた田」主打蛤蜊高湯拉麵，湯頭極度鮮甜有層次，怕鹹推薦點「味玉蛤蜊鹽味拉麵」（營業至 22:30）。"
+          },
+          {
+            time: "21:15",
+            name: "京都車站大階梯燈光秀 ＆ 11F 烏丸小路廣場夜景",
+            category: "景點",
+            lat: 34.9858,
+            lng: 135.7588,
+            mapQuery: "Kyoto Station Grand Staircase",
+            originQuery: "Kaidashimen Kitada Kyoto",
+            transportFromPrev: "步行 4 分鐘進入京都車站大樓，搭手扶梯至 4F 大階梯與 11F 烏丸小路廣場；看完搭地鐵烏丸線 2 站（¥220/人）回四條站返飯店。",
+            estCostCurrency: "JPY",
+            estCostAmount: 440,
+            estCostNote: "回程地鐵 ¥220×2人",
+            expCat: "交通移動",
+            tips: "【創世小夫妻私房機位】大階梯流水燈光秀展演至 22:00；搭手扶梯上 11F「烏丸小路廣場」陽台，可以拍到完全無人遮蔽的京都塔夜景合照！"
+          }
+        ]
+      },
+      {
+        day: 2,
+        dateStr: "1/11 (週一・成人之日)",
+        title: "寵物御守・西本願寺・御金神社・二條城・金閣寺與寶可夢中心",
+        ticketBadge: "啟用「京都地下鐵・巴士一日券 (¥1,100/人)」",
+        weatherTip: "今日為日本成人之日，巧妙避開東山和服人潮，且完美避開隔天週二二條城休館！",
+        stops: [
+          {
+            time: "09:00",
+            name: "平等寺（因幡堂）— 超人氣貓狗寵物御守",
+            category: "景點",
+            lat: 34.9999,
+            lng: 135.7599,
+            mapQuery: "Byodoji Inabado Kyoto",
+            originQuery: "Shizutetsu Hotel Prezio Kyoto Shijo",
+            transportFromPrev: "從四條靜鐵 PREZIO 往東南方向散步，步行僅 9 分鐘（約 650m）即達！（途中或之後於地鐵站售票機購買「地鐵・巴士一日券 ¥1,100」）。",
+            estCostCurrency: "JPY",
+            estCostAmount: 2200,
+            estCostNote: "地鐵巴士一日券 ¥1,100×2人",
+            expCat: "交通移動",
+            tips: "【R榮推薦必買】授與所 09:00 開門，第一站來完全免排隊！必買超萌「貓咪、柴犬、文鳥六病息災寵物御守」與可掛在寵物項圈上的「肉球鈴鐺御守」。"
+          },
+          {
+            time: "09:50",
+            name: "西本願寺（400年逆向生長巨型銀杏）",
+            category: "景點",
+            lat: 34.9913,
+            lng: 135.7517,
+            mapQuery: "Nishi Honganji Kyoto",
+            originQuery: "Byodoji Inabado Kyoto",
+            transportFromPrev: "走到五條通「烏丸五條」站搭市巴士 9、28 或 75 號（3站，約6分鐘，刷一日券免費）至「西本願寺前」下車。",
+            estCostCurrency: "JPY",
+            estCostAmount: 0,
+            estCostNote: "免門票・刷一日券",
+            expCat: "門票和服",
+            tips: "【瑪茲一推薦】世界文化遺產且免門票！必看國寶「御影堂」前樹齡約 400 年、樹根似向天空生長的「逆向銀杏（水吹銀杏）」與精緻唐門雕刻。"
+          },
+          {
+            time: "11:00",
+            name: "御金神社（金色鳥居求財）＆ 二條城（國寶二之丸御殿）",
+            category: "景點",
+            lat: 35.0142,
+            lng: 135.7482,
+            mapQuery: "Nijo Castle Kyoto",
+            originQuery: "Nishi Honganji Kyoto",
+            transportFromPrev: "在「西本願寺前」搭市巴士 9 號（約12分鐘，刷一日券）至「二條城前」下車 → 先往東走 5 分鐘拜「御金神社」，再走回「二條城」。",
+            estCostCurrency: "JPY",
+            estCostAmount: 2600,
+            estCostNote: "二條城+二之丸御殿門票 ¥1,300×2人",
+            expCat: "門票和服",
+            tips: "【重要驗證】二條城國寶「二之丸御殿」在 1 月每逢週二休館，排在今日週一 100% 開放！御金神社目前已改為禁止在水池洗錢，可購買銀杏繪馬與金光閃閃的福錢御守放錢包。"
+          },
+          {
+            time: "13:45",
+            name: "金閣寺（鹿苑寺）＆ 北野天滿宮",
+            category: "景點",
+            lat: 35.0394,
+            lng: 135.7292,
+            mapQuery: "Kinkaku-ji Kyoto",
+            originQuery: "Nijo Castle Kyoto",
+            transportFromPrev: "🚌 在「二條城前」搭市巴士 12 或 101 號（約25分鐘，刷一日券）至「金閣寺道」；逛完金閣寺搭 101/102/204/205 號（6分鐘）至「北野天滿宮前」。",
+            estCostCurrency: "JPY",
+            estCostAmount: 1000,
+            estCostNote: "金閣寺門票 ¥500×2人",
+            expCat: "門票和服",
+            tips: "【Kelly & 瑪茲一推薦】金閣寺 ¥500 門票本身就是一張「開運招福・家內安全」符咒，必與鏡湖池中的金閣倒影合照！接著去北野天滿宮摸御神牛祈求智慧、欣賞 1 月早開冬梅。"
+          },
+          {
+            time: "16:30",
+            name: "新風館 (Le Labo) ＆ 京都寶可夢中心 (SUINA室町 2F)",
+            category: "購物",
+            lat: 35.0039,
+            lng: 135.7590,
+            mapQuery: "Pokemon Center Kyoto",
+            originQuery: "Kitano Tenmangu Shrine",
+            transportFromPrev: "搭市巴士 50 或 101 號轉地鐵烏丸線（刷一日券）至「烏丸御池站」逛新風館，再往南走或搭地鐵 1 站至「四條站」直通 SUINA 室町 2F。",
+            estCostCurrency: "JPY",
+            estCostAmount: 0,
+            estCostNote: "刷地鐵巴士一日券",
+            expCat: "購物伴手禮",
+            tips: "【Kelly 避雷提醒】京都寶可夢中心（營業至 20:00）有超可愛的京都限定「藝伎皮卡丘」與鳳王玩偶，但「全店不提供退稅」，結帳時直接以含稅價計算喔！"
+          },
+          {
+            time: "18:30",
+            name: "晚餐：京燒肉 弘（四條烏丸店）",
+            category: "美食",
+            lat: 35.0028,
+            lng: 135.7582,
+            mapQuery: "Kyo Yakiniku Hiro Shijo Karasuma",
+            originQuery: "Pokemon Center Kyoto",
+            transportFromPrev: "從 SUINA 室町步行 3 分鐘即達；吃飽後走回「四條靜鐵 PREZIO」只要 4 分鐘！",
+            estCostCurrency: "JPY",
+            estCostAmount: 13000,
+            estCostNote: "雙人黑毛和牛燒肉約 ¥13,000",
+            expCat: "餐飲美食",
+            tips: "【R榮高CP值推薦】京都肉舖直營的超人氣和牛燒肉！必點「今宵限りの盛り合わせ（當日精選和牛拼盤）」與厚切牛舌，建議出發前 1 個月先在 Tabelog 預約。"
+          }
+        ]
+      },
+      {
+        day: 3,
+        dateStr: "1/12 (週二)",
+        title: "丸久小山園抹茶・here 咖啡・嵐山竹林漫步與茅草屋甜點",
+        ticketBadge: "全程刷 ICOCA / Suica（阪急＋JR）",
+        weatherTip: "三連休後首個平日，嵐山人潮最清幽，且週二「中村屋炸肉餅、卵や、小山園」全數營業！",
+        stops: [
+          {
+            time: "09:05",
+            name: "丸久小山園 西洞院店 ＆ here Kyoto 冠軍拉花咖啡",
+            category: "美食",
+            lat: 35.0076,
+            lng: 135.7544,
+            mapQuery: "Marukyu Koyamaen Nishinotoin",
+            originQuery: "Shizutetsu Hotel Prezio Kyoto Shijo",
+            transportFromPrev: "【住四條靜鐵 PREZIO 神級優勢】從飯店大門出來右轉，沿門口同一條「西洞院通」往北直走 300 公尺（步行僅 4 分鐘）即達！",
+            estCostCurrency: "JPY",
+            estCostAmount: 2500,
+            estCostNote: "here 拿鐵+夾心生吐司早餐",
+            expCat: "餐飲美食",
+            tips: "【YYYYmanda 採買秘笈】09:10 先在丸久小山園門口排隊等 09:30 開門買「五十鈴 / 青嵐」抹茶粉與抹茶捲心酥；買完直接去隔壁「here Kyoto」喝世界拉花冠軍咖啡配奶油起司生吐司，接著走 4 分鐘先把戰利品放回飯店房間，空手去嵐山！"
+          },
+          {
+            time: "10:15",
+            name: "阪急嵐山站 ＆ 渡月橋河畔散步",
+            category: "景點",
+            lat: 35.0116,
+            lng: 135.6777,
+            mapQuery: "Togetsukyo Bridge Arashiyama",
+            originQuery: "Shizutetsu Hotel Prezio Kyoto Shijo",
+            transportFromPrev: "從飯店步行 5 分鐘至阪急「烏丸站」，搭阪急京都線至「桂站」同月台轉乘嵐山線至「阪急嵐山站」（約20分鐘，¥240/人）。",
+            estCostCurrency: "JPY",
+            estCostAmount: 480,
+            estCostNote: "阪急電車 ¥240×2人",
+            expCat: "交通移動",
+            tips: "【1月冬季關鍵避雷】嵐山小火車每年 1～2 月冬季停駛維修！從四條搭阪急到嵐山只要 ¥240，從南側渡月橋一路往北逛到 JR 嵯峨嵐山站完全不走回頭路。"
+          },
+          {
+            time: "11:00",
+            name: "天龍寺（曹源池庭園）→ 竹林小徑 → 御髮神社 → 野宮神社",
+            category: "景點",
+            lat: 35.0169,
+            lng: 135.6713,
+            mapQuery: "Tenryu-ji Temple Kyoto",
+            originQuery: "Togetsukyo Bridge Arashiyama",
+            transportFromPrev: "過渡月橋即達天龍寺正門；參觀完由「天龍寺北門」走出直接連通竹林小徑、御髮神社與野宮神社。",
+            estCostCurrency: "JPY",
+            estCostAmount: 1000,
+            estCostNote: "天龍寺庭園門票 ¥500×2人",
+            expCat: "門票和服",
+            tips: "【懶散日記推薦動線】天龍寺看平和觀音與許願青蛙 → 竹林小徑拍空景 → 御髮神社（10:00–15:00，買超特別「迷你小剪刀御守」）→ 野宮神社（看黑木鳥居、摸神石龜求良緣）。"
+          },
+          {
+            time: "12:15",
+            name: "午餐：嵯峨とうふ 稲（湯葉烏龍麵）或 卵や（生雞蛋拌飯）",
+            category: "美食",
+            lat: 35.0155,
+            lng: 135.6768,
+            mapQuery: "Saga Tofu Ine Arashiyama",
+            originQuery: "Nonomiya Shrine Kyoto",
+            transportFromPrev: "從野宮神社走出嵐山大街即達「嵯峨とうふ 稲」（或往北過平交道至民宅小店「卵や」）。",
+            estCostCurrency: "JPY",
+            estCostAmount: 3600,
+            estCostNote: "和牛湯葉烏龍麵套餐雙人預算",
+            expCat: "餐飲美食",
+            tips: "【懶散日記 & 創世小夫妻推薦】「嵯峨とうふ 稲」必點豆香濃郁的腐皮（湯葉）烏龍麵與炙燒和牛湯葉烏龍麵（⚠️僅收現金，12:00左右入場免久候）。"
+          },
+          {
+            time: "13:45",
+            name: "BREAD, ESPRESSO & 嵐山庭園 ＆ 中村屋炸肉餅 ＆ 1分鐘鯛魚燒",
+            category: "美食",
+            lat: 35.0156,
+            lng: 135.6738,
+            mapQuery: "Bread Espresso Arashiyama Garden",
+            originQuery: "Saga Tofu Ine Arashiyama",
+            transportFromPrev: "嵐山大街周邊步行 3～6 分鐘。",
+            estCostCurrency: "JPY",
+            estCostAmount: 3500,
+            estCostNote: "抹茶法式吐司+炸肉餅+鯛魚燒",
+            expCat: "餐飲美食",
+            tips: "【嵐山甜點鹹食全制霸】① 先去 200 年茅草屋「BREAD, ESPRESSO & 嵐山庭園」抽號碼牌吃鐵盤抹茶法式吐司（若不想等內用可直接去隔壁麵包坊買抹茶吐司）；② 等候時走去買「中村屋總本店」爆汁炸肉餅（週二營業！）、良彌炸豆腐奶酪、賞味期限1分鐘冰火奶油鯛魚燒、八十八良葉舎濃抹拿鐵。"
+          },
+          {
+            time: "16:30",
+            name: "嵐電友禪光林（和服森林）→ 搭 JR / 嵐電返回市區",
+            category: "景點",
+            lat: 35.0152,
+            lng: 135.6775,
+            mapQuery: "Kimono Forest Arashiyama",
+            originQuery: "Bread Espresso Arashiyama Garden",
+            transportFromPrev: "位於嵐電嵐山站內（免費參觀）；回程從「JR 嵯峨嵐山站」搭 JR 回京都站轉地鐵（或搭嵐電至四條大宮站走回飯店，順逛 LIFE 大超市）。",
+            estCostCurrency: "JPY",
+            estCostAmount: 920,
+            estCostNote: "回程車資約 ¥460×2人",
+            expCat: "交通移動",
+            tips: "傍晚時分 600 根京友禪光柱點燈最夢幻！旁邊還有米飛兔櫻花廚房（Miffy 紅豆麵包）與 SNOOPY 巧克力店可逛。"
+          }
+        ]
+      },
+      {
+        day: 4,
+        dateStr: "1/13 (週三)",
+        title: "伏見稻荷千本鳥居・宇治抹茶竹筒芭菲・招福黑貓與鴨肉拉麵",
+        ticketBadge: "全程刷 ICOCA（地鐵＋JR奈良線＋京阪電車）",
+        weatherTip: "從伏見稻荷改搭「JR奈良線」去宇治，出站1分鐘秒抽中村藤吉號碼牌，少走15分鐘！",
+        stops: [
+          {
+            time: "08:45",
+            name: "伏見稻荷大社（千本鳥居）＆ 吉伊卡哇伏見本舖",
+            category: "景點",
+            lat: 34.9671,
+            lng: 135.7727,
+            mapQuery: "Fushimi Inari Taisha",
+            originQuery: "Shizutetsu Hotel Prezio Kyoto Shijo",
+            transportFromPrev: "從飯店走 5 分鐘至地鐵「四條站」搭 2 站至「京都站」，轉乘 JR 奈良線 2 站（5分鐘）至「JR 稻荷站」（共 ¥370/人，一出站正對面 0 公尺就是神社大門！）。",
+            estCostCurrency: "JPY",
+            estCostAmount: 740,
+            estCostNote: "地鐵+JR車資 ¥370×2人",
+            expCat: "交通移動",
+            tips: "【創世小夫妻 & Kelly 攻略】千本鳥居剛進去人最多，繼續往「奧社奉拜所」方向走鳥居間隙看得到天空、人少好拍，還可畫白狐繪馬、舉輕重石！參道必逛「吉伊卡哇伏見稻荷本舖（09:30開門）」買狐狸造型限定周邊、吃狐狸煎餅與稻荷壽司。"
+          },
+          {
+            time: "12:10",
+            name: "宇治 中村藤吉本店（第一件事：先抽號碼牌！）",
+            category: "美食",
+            lat: 34.8893,
+            lng: 135.8003,
+            mapQuery: "Nakamura Tokichi Honten Uji",
+            originQuery: "Inari Station Kyoto",
+            transportFromPrev: "從伏見稻荷正門對面的「JR 稻荷站」搭 JR 奈良線（約 17 分鐘，¥240/人）直達「JR 宇治站」，南口出站步行 1 分鐘即達本店！",
+            estCostCurrency: "JPY",
+            estCostAmount: 480,
+            estCostNote: "JR 稻荷→宇治 ¥240×2人",
+            expCat: "交通移動",
+            tips: "【YYYYmanda 時間管理鐵則】中村藤吉本店候位常需 90～150 分鐘！一出 JR 宇治站務必「先衝進去抽號碼牌」，掃描單據上的 QR Code 綁定 LINE 即時追蹤叫號，順便在店內買可退稅的抹茶巧克力餅乾，接著再去逛平等院！"
+          },
+          {
+            time: "12:30",
+            name: "平等院鳳凰堂（10日圓硬幣打卡）＆ 宇治上神社（兔子御守）",
+            category: "景點",
+            lat: 34.8893,
+            lng: 135.8077,
+            mapQuery: "Byodoin Temple Uji",
+            originQuery: "Nakamura Tokichi Honten Uji",
+            transportFromPrev: "利用中村藤吉候位空檔，沿宇治表參道步行 10 分鐘至平等院；逛完過朝霧橋步行 5 分鐘至對岸「宇治上神社」。",
+            estCostCurrency: "JPY",
+            estCostAmount: 1400,
+            estCostNote: "平等院門票 ¥700×2人",
+            expCat: "門票和服",
+            tips: "【必拍畫面】拿出預先準備好的「10 日圓硬幣」與世界遺產平等院鳳凰堂同框合照！接著過橋到日本最古老神社建築「宇治上神社」（注意 16:00 關門），看陰陽清砂、買兔子御守與 ¥300 精緻書籤詩籤。"
+          },
+          {
+            time: "14:30",
+            name: "返回 中村藤吉本店（享用本店限定「丸十竹筒抹茶芭菲」）",
+            category: "美食",
+            lat: 34.8893,
+            lng: 135.8003,
+            mapQuery: "Nakamura Tokichi Honten Uji",
+            originQuery: "Ujigami Shrine",
+            transportFromPrev: "收到 LINE 即將到號通知後，散步 12 分鐘走回中村藤吉本店入座。",
+            estCostCurrency: "JPY",
+            estCostAmount: 4500,
+            estCostNote: "竹筒抹茶芭菲+抹茶蕎麥麵",
+            expCat: "餐飲美食",
+            tips: "【YYYYmanda 必點】必吃宇治本店限定的「まるとパフェ（丸十竹筒抹茶芭菲）」，超過 10 層抹茶凍、焙茶冰淇淋、白玉與玄米粒層次超豐富！鹹食推薦搭配「白味噌雞肉抹茶蕎麥麵」。"
+          },
+          {
+            time: "16:15",
+            name: "檀王法林寺（請領消災招福黑貓）",
+            category: "景點",
+            lat: 35.0094,
+            lng: 135.7725,
+            mapQuery: "Danno Horinji Temple Kyoto",
+            originQuery: "Keihan Uji Station",
+            transportFromPrev: "散步至宇治川東岸「京阪宇治站」，搭京阪電車於中書島轉乘特急至「京阪三條站」（約30分鐘，¥430/人），出站步行 1 分鐘即達。",
+            estCostCurrency: "JPY",
+            estCostAmount: 860,
+            estCostNote: "京阪電車 ¥430×2人",
+            expCat: "交通移動",
+            tips: "【懶散日記隱藏景點】位於三條京阪站旁，趕在 16:30 授與所關門前按門鈴，即可入內購買手作「舉右手消災招福黑貓」與貓咪御守（寺內不可拍照；若在宇治待較晚，可改隔天早上順遊）。"
+          },
+          {
+            time: "17:30",
+            name: "晚餐：Gion Duck Noodles（法式櫻桃鴨肉沾麵）",
+            category: "美食",
+            lat: 35.0055,
+            lng: 135.7720,
+            mapQuery: "Gion Duck Noodles Kyoto",
+            originQuery: "Danno Horinji Temple Kyoto",
+            transportFromPrev: "沿鴨川往南散步 6 分鐘進入祇園北側小巷即達；餐後過四條大橋從阪急「京都河原町站」搭 1 站（¥170/人）回烏丸站返飯店。",
+            estCostCurrency: "JPY",
+            estCostAmount: 4200,
+            estCostNote: "雙人鴨肉沾麵/拉麵+車資",
+            expCat: "餐飲美食",
+            tips: "【YYYYmanda 推薦】藏身祇園巷弄、招牌只有符號的超人氣名店！鴨肉粉嫩完全無腥味，推薦點「法式櫻桃鴨肉沾麵（莓果醬汁解膩）」與「濃湯鴨肉拉麵」。"
+          }
+        ]
+      },
+      {
+        day: 5,
+        dateStr: "1/14 (週四)",
+        title: "東山和服體驗・清水寺與祇園古街全程下坡散策",
+        ticketBadge: "去程雙人計程車直達 ＋ 回程全程下坡散步免擠公車",
+        weatherTip: "1月穿和服務必內穿「大U領/深V領發熱衣＋發熱內搭褲＋貼式暖暖包」！",
+        stops: [
+          {
+            time: "09:00",
+            name: "祇園／五條坂 和服店換裝與編髮",
+            category: "景點",
+            lat: 35.0037,
+            lng: 135.7735,
+            mapQuery: "Gion Shijo Station",
+            originQuery: "Shizutetsu Hotel Prezio Kyoto Shijo",
+            transportFromPrev: "從四條靜鐵 PREZIO 兩人直接共乘計程車前往和服店（車程約 8 分鐘，車資約 ¥1,000，每人約台幣 108 元；或搭市巴士 207 號 ¥230/人）。",
+            estCostCurrency: "JPY",
+            estCostAmount: 12000,
+            estCostNote: "雙人情侶和服+編髮+¥500安心險+計程車",
+            expCat: "門票和服",
+            tips: "【創世小夫妻和服避雷】① 預約 09:00 第一批入場款式最齊全；② 務必加購 ¥500「污損免賠安心險」；③ 穿好和服後再搭計程車（約 ¥600）直接載到五條坂/清水道高處，省去穿木屐爬大斜坡的痛苦！"
+          },
+          {
+            time: "11:00",
+            name: "午餐：拉麵 一寸法師（清水坂干貝鹽味拉麵）",
+            category: "美食",
+            lat: 34.9958,
+            lng: 135.7818,
+            mapQuery: "Ramen Issunboshi Kiyomizu",
+            originQuery: "Gojozaka Kyoto",
+            transportFromPrev: "位於清水坂往清水寺爬坡中段，看到賣大糰子的店左轉進小巷即達（週四正常營業）。",
+            estCostCurrency: "JPY",
+            estCostAmount: 2400,
+            estCostNote: "雙人干貝鹽味拉麵",
+            expCat: "餐飲美食",
+            tips: "【懶散日記推薦】在觀光區卻有極高水準的干貝熬製「鹽味拉麵」，湯頭清澈鮮甜、粗麵條 Q 彈！穿和服吃麵記得跟店員索取「紙圍兜（紙エプロン）」。"
+          },
+          {
+            time: "12:00",
+            name: "清水寺（清水舞台・三重塔・音羽瀑布）",
+            category: "景點",
+            lat: 34.9949,
+            lng: 135.7850,
+            mapQuery: "Kiyomizu-dera Kyoto",
+            originQuery: "Ramen Issunboshi Kiyomizu",
+            transportFromPrev: "沿清水坂往上步行 4 分鐘即達清水寺仁王門。",
+            estCostCurrency: "JPY",
+            estCostAmount: 1000,
+            estCostNote: "清水寺門票 ¥500×2人",
+            expCat: "門票和服",
+            tips: "【Kelly 參拜重點】欣賞無釘木造「清水舞台」與日本最高朱紅「三重塔」，花 ¥100 抽運勢籤；走到下方的「音羽瀑布」切記：三道泉水（學業、戀愛、健康）只能選其中一道喝一口！"
+          },
+          {
+            time: "13:30",
+            name: "清水坂 → 三年坂 → 二年坂 → 八坂之塔（GOKAGO ＆ 日東堂）",
+            category: "美食",
+            lat: 34.9986,
+            lng: 135.7801,
+            mapQuery: "GOKAGO Kyoto Kiyomizu",
+            originQuery: "Kiyomizu-dera Kyoto",
+            transportFromPrev: "全程順著古街石板路緩緩下坡散步，完全不費力！",
+            estCostCurrency: "JPY",
+            estCostAmount: 2500,
+            estCostNote: "GOKAGO手刷抹茶+日東堂牛奶瓶咖啡",
+            expCat: "餐飲美食",
+            tips: "【懶散日記 & R榮必吃清單】① 本家西尾八橋（免費奉茶與試吃各種口味生八橋）；② GOKAGO（必點「少糖」現刷抹茶拿鐵＋濃抹冰淇淋，看店員現場手刷超療癒）；③ 八坂通拍「法觀寺八坂之塔」經典角度，買「日東堂 KYOTO COFFEE」可愛玻璃牛奶瓶拿鐵。"
+          },
+          {
+            time: "15:15",
+            name: "八坂庚申堂（彩色許願猴）→ 安井金比羅宮 → 寧寧之道 → 八坂神社",
+            category: "景點",
+            lat: 35.0037,
+            lng: 135.7785,
+            mapQuery: "Yasaka Koshindo Kyoto",
+            originQuery: "Hokan-ji Yasaka Pagoda",
+            transportFromPrev: "從八坂之塔繼續順著平緩下坡走至八坂神社與祇園，17:00 前歸還和服。",
+            estCostCurrency: "JPY",
+            estCostAmount: 500,
+            estCostNote: "許願猴或繪馬體驗",
+            expCat: "門票和服",
+            tips: "【和服出片聖地】金剛寺八坂庚申堂（色彩繽紛的布製許願猴牆，17:00關門）→ 安井金比羅宮（鑽過貼滿形代的「緣切緣結石」斬惡緣結良緣）→ 寧寧之道 → 八坂神社西樓門。"
+          },
+          {
+            time: "18:00",
+            name: "晚餐：京うな和 本店（吉伊卡哇炭火鰻魚飯三吃）",
+            category: "美食",
+            lat: 35.0058,
+            lng: 135.7668,
+            mapQuery: "Kyo Unawa Honten Kyoto",
+            originQuery: "Yasaka Shrine Kyoto",
+            transportFromPrev: "歸還和服後，散步過四條大橋至河原町/新京極用餐；餐後逛藥妝店回四條靜鐵 PREZIO 打包行李。",
+            estCostCurrency: "JPY",
+            estCostAmount: 8500,
+            estCostNote: "雙人炭火鰻魚飯三吃套餐",
+            expCat: "餐飲美食",
+            tips: "【懶散日記大推】店內擺滿老闆收藏的吉伊卡哇（Chiikawa）玩偶！必點炭火現烤「鰻魚飯三吃（ひつまぶし）」，依序品嚐原味、加蔥花芥末、最後倒入熱高湯變茶泡飯。"
+          }
+        ]
+      },
+      {
+        day: 6,
+        dateStr: "1/15 (週五)",
+        title: "京都車站伴手禮最後衝刺・機場海關 Kiosk 退稅與星宇返台",
+        ticketBadge: "地鐵烏丸線 ＋ JR HARUKA 特急往關西機場",
+        weatherTip: "08:30 京都站伴手禮開門一次買齊塞入託運箱，抵機場記得「先刷海關 Kiosk 退稅、再託運」！",
+        stops: [
+          {
+            time: "08:00",
+            name: "四條靜鐵 PREZIO 退房 → 搭地鐵抵京都車站",
+            category: "交通",
+            lat: 34.9858,
+            lng: 135.7588,
+            mapQuery: "Kyoto Station",
+            originQuery: "Shizutetsu Hotel Prezio Kyoto Shijo",
+            transportFromPrev: "推大行李走烏丸站「23號出口（SUINA室町大型電梯）」下樓，搭地下鐵烏丸線 2 站（4分鐘，¥220/人）於 08:20 抵達京都車站。",
+            estCostCurrency: "JPY",
+            estCostAmount: 440,
+            estCostNote: "地鐵烏丸線 ¥220×2人",
+            expCat: "交通移動",
+            tips: "若想吃碗熱騰騰的拉麵當早餐，也可提早於 07:15 去京都車站旁 07:00 就開門的「貝だし麺 きた田」享用蛤蜊拉麵！"
+          },
+          {
+            time: "08:30",
+            name: "京都車站 2F 南北自由通路「京名菓・名菜處 亰」買齊 4 大伴手禮",
+            category: "購物",
+            lat: 34.9855,
+            lng: 135.7580,
+            mapQuery: "Kyoto Station Nishiguchi Plaza",
+            originQuery: "Kyoto Station",
+            transportFromPrev: "位於京都車站 2F 南北自由通路（西口改札正對面，08:30 準時開門）。",
+            estCostCurrency: "JPY",
+            estCostAmount: 8000,
+            estCostNote: "4大伴手禮採買預估 (計入購物)",
+            expCat: "購物伴手禮",
+            tips: "【創世小夫妻實測 4 大必買伴手禮】① 京ばあむ（抹茶豆乳年輪蛋糕，效期僅5-6天，最後一天買最剛好）；② 京都×法國聯名雙色抹茶費南雪；③ GODIVA 生八橋（甘納許巧克力麻糬）；④ 九條蔥蝦米脆餅。買完現場塞進託運行李箱！"
+          },
+          {
+            time: "09:30",
+            name: "搭乘 JR HARUKA 特急 → 關西國際機場 (KIX)",
+            category: "交通",
+            lat: 34.4320,
+            lng: 135.2304,
+            mapQuery: "Kansai International Airport",
+            originQuery: "Kyoto Station",
+            transportFromPrev: "從京都車站 30 號月台搭乘 09:30 發車的 HARUKA 15號（10:50 抵關西機場）或 10:00 發車的 HARUKA 17號（11:20 抵關西機場）。",
+            estCostCurrency: "JPY",
+            estCostAmount: 4400,
+            estCostNote: "HARUKA 回程票 ¥2,200×2人",
+            expCat: "交通移動",
+            tips: "車程約 80 分鐘，可在車上休息整理隨身包包，確認行動電源已取出放在隨身小包內（不可留在託運行李箱或放機艙頭頂櫃）。"
+          },
+          {
+            time: "11:00",
+            name: "關西機場「海關 Kiosk 退稅核銷」→ 星宇 JX823 報到返台",
+            category: "交通",
+            lat: 34.4320,
+            lng: 135.2304,
+            mapQuery: "Kansai International Airport Terminal 1",
+            originQuery: "Kansai International Airport Station",
+            transportFromPrev: "14:00 搭乘星宇航空 JX823 起飛 → 16:20 平安返抵台北桃園國際機場 (TPE)！",
+            estCostCurrency: "JPY",
+            estCostAmount: 0,
+            estCostNote: "已含於星宇來回機票",
+            expCat: "機票住宿",
+            tips: "【⚠️2026/11 退稅新制最關鍵步驟】抵達關西機場第 1 航廈 4F 出境大廳後，「先不要去星宇櫃檯託運行李」！請先推著行李去海關退稅機台 (Kiosk) 掃描護照完成免稅品核銷（10% 退稅金將退回信用卡），完成後再去星宇櫃檯辦理免費行李託運與過安檢逛免稅店！"
+          }
+        ]
+      }
+    ];
+
+    // =========================================================================
+    // 2. PRE-TRIP CHECKLIST DATA
+    // =========================================================================
+    const DEFAULT_CHECKLIST = [
+      { id: "chk_1", group: "立即確認", text: "訂妥星宇航空 2027/01/10 (JX820) - 01/15 (JX823) 雙人來回機票 (NT$28,850)" },
+      { id: "chk_2", group: "立即確認", text: "訂妥「京都四條靜鐵 PREZIO 酒店」5晚 (確認選 Standard Double 標準雙人房 18m² 才有乾濕分離大浴室)" },
+      { id: "chk_3", group: "立即確認", text: "安排 1/10 清晨前往桃園機場交通 (07:40 起飛，建議 05:15–05:30 抵達桃機櫃檯，預約機場接送或自駕)" },
+      { id: "chk_4", group: "出發前1-2個月", text: "預約 Day 5 (1/14 09:00) 清水寺/祇園雙人和服體驗 (勾選編髮＋加購 ¥500 污損安心險)" },
+      { id: "chk_5", group: "出發前1-2個月", text: "於 Tabelog 線上預約 Day 2 (1/11 18:30)「京燒肉 弘 四條烏丸店」" },
+      { id: "chk_6", group: "出發前1-2個月", text: "於 Klook / KKday 購買「JR HARUKA 關西機場↔京都單程票」來回共 4 張" },
+      { id: "chk_7", group: "出發前2週", text: "於官網預約 Day 1 (1/10 16:45)「幸福鬆餅 A Happy Pancake 京都店」(出發前2週開放)" },
+      { id: "chk_8", group: "出發前2週", text: "填寫 Visit Japan Web 取得入境審查與海關申報＆免稅 QR Code" },
+      { id: "chk_9", group: "出發前2週", text: "投保雙人海外旅平險＋不便險、購買 6 天日本高速 eSIM" },
+      { id: "chk_10", group: "出發前2週", text: "iPhone 錢包加入 Suica 或 ICOCA 並儲值（或準備實體 ICOCA 卡）" },
+      { id: "chk_11", group: "行李打包必備", text: "攜帶「大U領/深V領發熱衣＋發熱內搭褲＋貼式暖暖包」（Day 5 穿和服隱形保暖必備）" },
+      { id: "chk_12", group: "行李打包必備", text: "檢查美髮器：只帶「傳統插電線式」離子夾/電捲棒（嚴禁攜帶內建鋰電池無線離子夾）" },
+      { id: "chk_13", group: "行李打包必備", text: "準備充足日幣現金（B2 LOPIA 超市、嵐山嵯峨とうふ稲、部分寺院御守僅收現金）與一枚 10 日圓硬幣" },
+      { id: "chk_14", group: "回程機場提醒", text: "1/15 關西機場回程：先至出境大廳海關 Kiosk 掃護照完成 10% 退稅核銷，再去星宇櫃檯託運行李" }
+    ];
+
+    // =========================================================================
+    // 3. DEFAULT EXPENSE DATA (FIXED CONFIRMED COSTS + SAMPLE GENERATOR)
+    // =========================================================================
+    const FIXED_INITIAL_EXPENSES = [
+      {
+        id: "fixed_flight",
+        day: "行前",
+        category: "機票住宿",
+        title: "星宇航空來回機票 (JX820/JX823 雙人含23kg託運)",
+        currency: "TWD",
+        amount: 28850,
+        payer: "A",
+        split: "EVEN"
+      },
+      {
+        id: "fixed_hotel",
+        day: "行前",
+        category: "機票住宿",
+        title: "京都四條靜鐵 PREZIO 酒店 (1/10-1/15 連住5晚標準雙人房)",
+        currency: "TWD",
+        amount: 7901,
+        payer: "A",
+        split: "EVEN"
+      },
+      {
+        id: "fixed_tax",
+        day: "Day 1",
+        category: "機票住宿",
+        title: "京都市住宿稅 (5晚×2人 櫃檯現場支付)",
+        currency: "JPY",
+        amount: 2000,
+        payer: "B",
+        split: "EVEN"
+      },
+      {
+        id: "fixed_pre_tw",
+        day: "行前",
+        category: "其他保險網卡",
+        title: "桃園機場清晨接送交通＋雙人旅平不便險＋6日eSIM預估",
+        currency: "TWD",
+        amount: 4800,
+        payer: "B",
+        split: "EVEN"
+      }
+    ];
+
+    const CATEGORY_META = {
+      "機票住宿": { icon: "fa-hotel", color: "bg-blue-600", badge: "bg-blue-100 text-blue-800", targetTwd: 37200 },
+      "餐飲美食": { icon: "fa-utensils", color: "bg-kyoto-torii", badge: "bg-red-100 text-red-800", targetTwd: 10500 },
+      "交通移動": { icon: "fa-train-subway", color: "bg-emerald-600", badge: "bg-emerald-100 text-emerald-800", targetTwd: 4500 },
+      "門票和服": { icon: "fa-torii-gate", color: "bg-purple-600", badge: "bg-purple-100 text-purple-800", targetTwd: 5000 },
+      "其他保險網卡": { icon: "fa-shield-halved", color: "bg-slate-600", badge: "bg-slate-200 text-slate-800", targetTwd: 5000 },
+      "購物伴手禮": { icon: "fa-bag-shopping", color: "bg-amber-500", badge: "bg-amber-100 text-amber-800", targetTwd: 15000 }
+    };
+
+    const VALID_EXPENSE_DAYS = ["行前", "Day 1", "Day 2", "Day 3", "Day 4", "Day 5", "Day 6"];
+
+    // =========================================================================
+    // 4. STATE MANAGEMENT & LOCALSTORAGE
+    // =========================================================================
+    const STORAGE_KEYS = {
+      EXPENSES: "kyoto2027_expenses_v1",
+      RATE: "kyoto2027_rate_v1",
+      RATE_MODE: "kyoto2027_rate_mode_v1",
+      NAMES: "kyoto2027_names_v1",
+      CHECKLIST: "kyoto2027_checklist_v1",
+      GAS_URL: "kyoto2027_gas_url_v1",
+      AUTO_SYNC: "kyoto2027_auto_sync_v1"
+    };
+
+    let currentDayIndex = 0; // 0 = Day 1
+    let exchangeRate = 0.215;
+    let travelerNames = { A: "旅伴 A", B: "旅伴 B" };
+    let expenses = [];
+    let checklistState = {};
+
+    // Google Sheets sync state
+    let gasUrl = "";
+    let autoSyncEnabled = true;
+    let autoSyncTimer = null;
+
+    // localStorage can throw in private mode / blocked storage, so every access goes through these
+    function storageGet(key) {
+      try { return localStorage.getItem(key); } catch (e) { return null; }
+    }
+
+    function storageSet(key, value) {
+      try { localStorage.setItem(key, value); } catch (e) { console.error("Failed to save:", key, e); }
+    }
+
+    function storageRemove(key) {
+      try { localStorage.removeItem(key); } catch (e) { /* ignore */ }
+    }
+
+    function sanitizeName(value, fallback) {
+      const name = String(value || "").trim().slice(0, 20);
+      return name || fallback;
+    }
+
+    function loadAppState() {
+      try {
+        const savedRate = storageGet(STORAGE_KEYS.RATE);
+        if (savedRate && !isNaN(parseFloat(savedRate))) {
+          exchangeRate = parseFloat(savedRate);
+        }
+        document.getElementById("rateInput").value = exchangeRate;
+        document.getElementById("navRateDisplay").textContent = exchangeRate;
+
+        const savedNames = storageGet(STORAGE_KEYS.NAMES);
+        if (savedNames) {
+          const parsedNames = JSON.parse(savedNames) || {};
+          travelerNames = { A: sanitizeName(parsedNames.A, "旅伴 A"), B: sanitizeName(parsedNames.B, "旅伴 B") };
+          document.getElementById("travelerAName").value = travelerNames.A;
+          document.getElementById("travelerBName").value = travelerNames.B;
+        }
+        syncPayerSelectLabels();
+
+        const savedExpenses = storageGet(STORAGE_KEYS.EXPENSES);
+        const parsedExpenses = savedExpenses ? JSON.parse(savedExpenses) : null;
+        if (Array.isArray(parsedExpenses)) {
+          expenses = parsedExpenses.map(normalizeExpense);
+        } else {
+          expenses = JSON.parse(JSON.stringify(FIXED_INITIAL_EXPENSES));
+          saveExpensesToStorage();
+        }
+
+        const savedChecklist = storageGet(STORAGE_KEYS.CHECKLIST);
+        if (savedChecklist) {
+          checklistState = JSON.parse(savedChecklist);
+        }
+
+        gasUrl = storageGet(STORAGE_KEYS.GAS_URL) || "";
+        if (gasUrl && !isValidGasUrl(gasUrl)) gasUrl = "";
+        autoSyncEnabled = storageGet(STORAGE_KEYS.AUTO_SYNC) !== "off";
+        document.getElementById("gasWebAppUrlInput").value = gasUrl;
+        document.getElementById("autoSyncToggle").checked = autoSyncEnabled;
+      } catch (err) {
+        console.error("State load error:", err);
+        expenses = JSON.parse(JSON.stringify(FIXED_INITIAL_EXPENSES));
+      }
+    }
+
+    function saveExpensesToStorage() {
+      storageSet(STORAGE_KEYS.EXPENSES, JSON.stringify(expenses));
+    }
+
+    // =========================================================================
+    // 5. NAVIGATION & TABS
+    // =========================================================================
+    function switchMainTab(tabName) {
+      const tabs = ["itinerary", "expense", "checklist"];
+      tabs.forEach(t => {
+        const content = document.getElementById(`tabContent-${t}`);
+        const btn = document.getElementById(`tabBtn-${t}`);
+        if (t === tabName) {
+          content.classList.remove("hidden");
+          btn.className = "flex-1 md:flex-initial inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs md:text-sm font-bold transition bg-kyoto-matcha text-white shadow-sm";
+        } else {
+          content.classList.add("hidden");
+          btn.className = "flex-1 md:flex-initial inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs md:text-sm font-bold transition text-kyoto-ink hover:bg-kyoto-matchaPale";
+        }
+      });
+
+      if (tabName === "itinerary" && mapApi) {
+        setTimeout(() => {
+          mapApi.resize();
+          mapApi.fitDay();
+        }, 120);
+      }
+    }
+
+    // =========================================================================
+    // 6. INTERACTIVE MAP: Google Maps JavaScript API (primary) + Leaflet (fallback)
+    // =========================================================================
+    // 資安說明：Maps JavaScript API 金鑰一定會出現在瀏覽器端（任何人按 F12 都看得到），
+    // 前端程式「無法」把它藏起來。真正的防護是在 Google Cloud Console 替這把金鑰設限：
+    //   1. 應用程式限制 → 網站 (HTTP referrers)：只允許你放這個網頁的網域
+    //   2. API 限制 → 只勾選「Maps JavaScript API」
+    //   3. 配額 → 為 Map loads 設定每日上限，並設定帳單預算警示
+    // 金鑰被拒（網域不符、API 未啟用、未綁帳單…）時，地圖會自動改用免金鑰的 Leaflet 備援。
+    const GOOGLE_MAPS_CONFIG = {
+      apiKey: "AIzaSyBqvUn2_9DInmmJ61w-1uJWDZhfUG1Hybs",
+      // Advanced Markers 需要 Map ID（Cloud Console →「Google 地圖平台」→「地圖管理」）。
+      // 地圖配色由綁定在這個 Map ID 上的雲端樣式決定，改樣式不必動程式碼
+      mapId: "f241d798ce887826417b1019",
+      loadTimeoutMs: 12000
+    };
+
+    // Fallback assets, pinned with Subresource Integrity hashes
+    const LEAFLET_ASSETS = {
+      css: "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css",
+      cssIntegrity: "sha384-sHL9NAb7lN7rfvG5lfHpm643Xkcjzp4jFvuavGOndn6pjVqS6ny56CAt3nsEVT4H",
+      js: "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js",
+      jsIntegrity: "sha384-cxOPjt7s7Iz04uaHJceBmS+qpjv2JkIHNVcuOrM+YHwZOmJGBXI00mdUXEq65HTH"
+    };
+
+    // Active map implementation: { provider, showDay, fitDay, focusHotel, focusStop, resize }
+    let mapApi = null;
+    let mapFallbackStarted = false;
+
+    function setMapProviderBadge(state, detail) {
+      const labels = {
+        loading: "地圖載入中…",
+        google: "Google Maps",
+        leaflet: "備援地圖 (OpenStreetMap)",
+        error: "地圖無法載入"
+      };
+      const el = document.getElementById("mapProviderBadge");
+      el.textContent = labels[state] || "";
+      el.title = detail || "";
+    }
+
+    function buildStopPopupHtml(stop, num) {
+      const dirUrl = `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(stop.originQuery)}&destination=${encodeURIComponent(stop.mapQuery)}&travelmode=transit`;
+      return `
+        <div class="text-xs space-y-1 max-w-[220px]">
+          <div class="font-bold text-kyoto-matcha">${num}. [${stop.time}] ${stop.name}</div>
+          <div class="text-gray-600">${stop.transportFromPrev}</div>
+          <div class="pt-1 flex gap-1.5">
+            <a href="${dirUrl}" target="_blank" rel="noopener noreferrer"
+               class="px-2 py-1 rounded bg-blue-600 text-white font-semibold">開啟 Google 導航</a>
+          </div>
+        </div>
+      `;
+    }
+
+    function buildHotelPopupHtml() {
+      return `
+        <div class="text-xs space-y-1">
+          <div class="font-bold text-sm">🏨 京都四條靜鐵 PREZIO 酒店</div>
+          <div class="text-gray-600">連住 5 晚飯店｜地鐵四條站/烏丸站 23號電梯出口</div>
+          <a href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(HOTEL_QUERY)}&travelmode=transit"
+             target="_blank" rel="noopener noreferrer" class="inline-block mt-1 px-2.5 py-1 bg-emerald-700 text-white rounded font-semibold">
+             Google Maps 導航回飯店
+          </a>
+        </div>
+      `;
+    }
+
+    const HOTEL_BADGE_STYLE = "background:#1E3A8A;color:#fff;padding:3px 7px;border-radius:8px;font-size:11px;font-weight:700;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.3);white-space:nowrap;cursor:pointer;";
+
+    // ---------- Google Maps ----------
+    function loadGoogleMapsScript() {
+      if (window.google && window.google.maps && window.google.maps.importLibrary) {
+        return Promise.resolve();
+      }
+      return new Promise((resolve, reject) => {
+        const timer = setTimeout(() => reject(new Error("Google Maps 載入逾時")), GOOGLE_MAPS_CONFIG.loadTimeoutMs);
+        window.__onGoogleMapsLoaded = () => {
+          clearTimeout(timer);
+          resolve();
+        };
+        const params = new URLSearchParams({
+          key: GOOGLE_MAPS_CONFIG.apiKey,
+          v: "weekly",
+          loading: "async",
+          language: "zh-TW",
+          region: "JP",
+          callback: "__onGoogleMapsLoaded"
+        });
+        const script = document.createElement("script");
+        script.src = `https://maps.googleapis.com/maps/api/js?${params}`;
+        script.async = true;
+        script.onerror = () => {
+          clearTimeout(timer);
+          reject(new Error("無法下載 Google Maps 程式庫"));
+        };
+        document.head.appendChild(script);
+      });
+    }
+
+    async function createGoogleMapApi() {
+      const [{ Map, InfoWindow, Polyline }, { AdvancedMarkerElement }, { LatLngBounds }] = await Promise.all([
+        google.maps.importLibrary("maps"),
+        google.maps.importLibrary("marker"),
+        google.maps.importLibrary("core")
+      ]);
+
+      const hotelPos = { lat: HOTEL_COORDS[0], lng: HOTEL_COORDS[1] };
+      const map = new Map(document.getElementById("kyotoMap"), {
+        center: hotelPos,
+        zoom: 13,
+        mapId: GOOGLE_MAPS_CONFIG.mapId,
+        gestureHandling: "cooperative",
+        mapTypeControl: false,
+        streetViewControl: false,
+        fullscreenControl: true,
+        clickableIcons: false
+      });
+      const infoWindow = new InfoWindow();
+
+      // Hotel badge sits just below its coordinate so it doesn't cover the day's numbered markers
+      const hotelBadge = document.createElement("div");
+      hotelBadge.className = "gmap-marker-below";
+      hotelBadge.style.cssText = HOTEL_BADGE_STYLE;
+      hotelBadge.textContent = "🏨 四條靜鐵PREZIO";
+      const hotelMarker = new AdvancedMarkerElement({
+        map,
+        position: hotelPos,
+        content: hotelBadge,
+        title: "京都四條靜鐵 PREZIO 酒店",
+        zIndex: 0
+      });
+      const openHotelInfo = () => {
+        infoWindow.setContent(buildHotelPopupHtml());
+        infoWindow.open({ map, anchor: hotelMarker });
+      };
+      hotelMarker.addEventListener("gmp-click", openHotelInfo);
+
+      let dayStops = [];
+      let stopMarkers = [];
+      let routeLine = null;
+
+      function openStopInfo(stopIdx) {
+        const stop = dayStops[stopIdx];
+        if (!stop || !stopMarkers[stopIdx]) return;
+        infoWindow.setContent(buildStopPopupHtml(stop, stopIdx + 1));
+        infoWindow.open({ map, anchor: stopMarkers[stopIdx] });
+      }
+
+      function showDay(dayObj) {
+        infoWindow.close();
+        stopMarkers.forEach(m => { m.map = null; });
+        stopMarkers = [];
+        if (routeLine) {
+          routeLine.setMap(null);
+          routeLine = null;
+        }
+
+        dayStops = dayObj.stops;
+        const path = dayStops.map(s => ({ lat: s.lat, lng: s.lng }));
+
+        dayStops.forEach((stop, sIdx) => {
+          const pin = document.createElement("div");
+          pin.className = "custom-map-marker";
+          pin.style.backgroundColor = getCategoryMarkerColor(stop.category);
+          pin.textContent = String(sIdx + 1);
+          const wrapper = document.createElement("div");
+          wrapper.className = "gmap-marker-center";
+          wrapper.appendChild(pin);
+
+          const marker = new AdvancedMarkerElement({
+            map,
+            position: path[sIdx],
+            content: wrapper,
+            title: `${sIdx + 1}. ${stop.name}`,
+            zIndex: 10 + sIdx
+          });
+          marker.addEventListener("gmp-click", () => {
+            openStopInfo(sIdx);
+            highlightStopCard(sIdx);
+          });
+          stopMarkers.push(marker);
+        });
+
+        if (path.length > 1) {
+          // Dashed line = transparent stroke + repeating dash symbol
+          routeLine = new Polyline({
+            map,
+            path,
+            strokeOpacity: 0,
+            icons: [{
+              icon: { path: "M 0,-1 0,1", strokeColor: "#3A5A40", strokeOpacity: 0.75, strokeWeight: 3.5, scale: 3 },
+              offset: "0",
+              repeat: "14px"
+            }]
+          });
+        }
+
+        fitDay();
+      }
+
+      function fitDay() {
+        if (dayStops.length === 0) return;
+        const bounds = new LatLngBounds();
+        dayStops.forEach(s => bounds.extend({ lat: s.lat, lng: s.lng }));
+        map.fitBounds(bounds, 40);
+      }
+
+      function focusStop(stopIdx) {
+        const stop = dayStops[stopIdx];
+        if (!stop) return;
+        map.panTo({ lat: stop.lat, lng: stop.lng });
+        map.setZoom(16);
+        openStopInfo(stopIdx);
+      }
+
+      function focusHotel() {
+        map.panTo(hotelPos);
+        map.setZoom(16);
+        openHotelInfo();
+      }
+
+      // Google Maps observes its container size itself
+      function resize() {}
+
+      return { provider: "google", showDay, fitDay, focusHotel, focusStop, resize };
+    }
+
+    // ---------- Leaflet fallback ----------
+    function loadExternalStylesheet(href, integrity) {
+      return new Promise((resolve, reject) => {
+        const link = document.createElement("link");
+        link.rel = "stylesheet";
+        link.href = href;
+        link.integrity = integrity;
+        link.crossOrigin = "anonymous";
+        link.referrerPolicy = "no-referrer";
+        link.onload = resolve;
+        link.onerror = () => reject(new Error("無法載入 " + href));
+        document.head.appendChild(link);
+      });
+    }
+
+    function loadExternalScript(src, integrity) {
+      return new Promise((resolve, reject) => {
+        const script = document.createElement("script");
+        script.src = src;
+        script.integrity = integrity;
+        script.crossOrigin = "anonymous";
+        script.referrerPolicy = "no-referrer";
+        script.onload = resolve;
+        script.onerror = () => reject(new Error("無法載入 " + src));
+        document.head.appendChild(script);
+      });
+    }
+
+    async function createLeafletMapApi() {
+      if (typeof L === "undefined") {
+        await Promise.all([
+          loadExternalStylesheet(LEAFLET_ASSETS.css, LEAFLET_ASSETS.cssIntegrity),
+          loadExternalScript(LEAFLET_ASSETS.js, LEAFLET_ASSETS.jsIntegrity)
+        ]);
+      }
+
+      const map = L.map("kyotoMap", {
+        center: HOTEL_COORDS,
+        zoom: 13,
+        scrollWheelZoom: false
+      });
+
+      // CARTO's free basemaps now show an "API KEY REQUIRED" watermark, so use the standard OSM tiles
+      L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a>',
+        maxZoom: 19
+      }).addTo(map);
+
+      const hotelIcon = L.divIcon({
+        className: "",
+        html: `<div style="${HOTEL_BADGE_STYLE}">🏨 四條靜鐵PREZIO</div>`,
+        iconSize: [110, 26],
+        iconAnchor: [55, -6]
+      });
+      const hotelMarker = L.marker(HOTEL_COORDS, { icon: hotelIcon, zIndexOffset: -100 })
+        .addTo(map)
+        .bindPopup(buildHotelPopupHtml());
+
+      let dayStops = [];
+      let stopMarkers = [];
+      let routeLine = null;
+
+      function showDay(dayObj) {
+        stopMarkers.forEach(m => map.removeLayer(m));
+        stopMarkers = [];
+        if (routeLine) {
+          map.removeLayer(routeLine);
+          routeLine = null;
+        }
+
+        dayStops = dayObj.stops;
+        const latLngs = dayStops.map(s => [s.lat, s.lng]);
+
+        dayStops.forEach((stop, sIdx) => {
+          const icon = L.divIcon({
+            className: "",
+            html: `<div class="custom-map-marker" style="background-color: ${getCategoryMarkerColor(stop.category)};">${sIdx + 1}</div>`,
+            iconSize: [30, 30],
+            iconAnchor: [15, 15],
+            popupAnchor: [0, -15]
+          });
+          const marker = L.marker(latLngs[sIdx], { icon })
+            .addTo(map)
+            .bindPopup(buildStopPopupHtml(stop, sIdx + 1));
+          marker.on("click", () => highlightStopCard(sIdx));
+          stopMarkers.push(marker);
+        });
+
+        if (latLngs.length > 1) {
+          routeLine = L.polyline(latLngs, {
+            color: "#3A5A40",
+            weight: 3.5,
+            opacity: 0.75,
+            dashArray: "6, 8"
+          }).addTo(map);
+        }
+
+        fitDay();
+      }
+
+      function fitDay() {
+        if (stopMarkers.length === 0) return;
+        map.fitBounds(L.featureGroup(stopMarkers).getBounds().pad(0.18));
+      }
+
+      function focusStop(stopIdx) {
+        const stop = dayStops[stopIdx];
+        if (!stop) return;
+        map.setView([stop.lat, stop.lng], 16, { animate: true });
+        if (stopMarkers[stopIdx]) stopMarkers[stopIdx].openPopup();
+      }
+
+      function focusHotel() {
+        map.setView(HOTEL_COORDS, 16, { animate: true });
+        hotelMarker.openPopup();
+      }
+
+      function resize() {
+        map.invalidateSize();
+      }
+
+      return { provider: "leaflet", showDay, fitDay, focusHotel, focusStop, resize };
+    }
+
+    // ---------- Startup & failover ----------
+    async function initMap() {
+      setMapProviderBadge("loading");
+      try {
+        await loadGoogleMapsScript();
+        const api = await createGoogleMapApi();
+        if (mapFallbackStarted) return; // key was rejected while the map was being built
+        mapApi = api;
+        setMapProviderBadge("google");
+        mapApi.showDay(ITINERARY_DATA[currentDayIndex]);
+      } catch (err) {
+        console.warn("Google Maps unavailable, using fallback map:", err);
+        switchToFallbackMap(err && err.message);
+      }
+    }
+
+    // Google calls this global when the key is rejected (referrer not allowed, API disabled, billing off…)
+    window.gm_authFailure = function () {
+      console.warn("Google Maps API key was rejected (gm_authFailure). Check the key restrictions in Google Cloud Console.");
+      switchToFallbackMap("Google Maps 金鑰驗證失敗（網域未授權或 API 未啟用）");
+    };
+
+    async function switchToFallbackMap(reason) {
+      if (mapFallbackStarted) return;
+      mapFallbackStarted = true;
+      mapApi = null;
+
+      // Swap in a clean container so no Google Maps DOM or listeners linger
+      const oldEl = document.getElementById("kyotoMap");
+      const freshEl = document.createElement("div");
+      freshEl.id = oldEl.id;
+      freshEl.className = oldEl.className;
+      oldEl.replaceWith(freshEl);
+
+      try {
+        mapApi = await createLeafletMapApi();
+        setMapProviderBadge("leaflet", reason);
+        mapApi.showDay(ITINERARY_DATA[currentDayIndex]);
+      } catch (err) {
+        console.error("Fallback map failed:", err);
+        freshEl.innerHTML =
+          '<div class="h-full flex items-center justify-center text-xs text-kyoto-muted p-4 text-center">地圖元件載入失敗（請確認網路連線後重新整理）</div>';
+        setMapProviderBadge("error", reason);
+      }
+    }
+
+    // ---------- Itinerary rendering ----------
+    function renderDaySelectorTabs() {
+      const container = document.getElementById("dayTabsContainer");
+      container.innerHTML = ITINERARY_DATA.map((d, idx) => {
+        const isActive = idx === currentDayIndex;
+        return `
+          <button onclick="selectItineraryDay(${idx})"
+                  class="flex-shrink-0 px-4 py-2.5 rounded-2xl border text-left transition-all ${
+                    isActive
+                      ? "bg-kyoto-matcha text-white border-kyoto-matcha shadow-sm"
+                      : "bg-white text-kyoto-ink border-kyoto-border hover:border-kyoto-matcha/50"
+                  }">
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-extrabold px-2 py-0.5 rounded-full ${
+                isActive ? "bg-white/20 text-white" : "bg-kyoto-matchaPale text-kyoto-matcha"
+              }">Day ${d.day}</span>
+              <span class="text-xs font-semibold ${isActive ? "text-amber-200" : "text-kyoto-muted"}">${d.dateStr}</span>
+            </div>
+            <div class="text-xs font-bold mt-1 max-w-[175px] truncate">${d.title.split("・")[0]}</div>
+          </button>
+        `;
+      }).join("");
+    }
+
+    function selectItineraryDay(dayIdx) {
+      currentDayIndex = dayIdx;
+      renderDaySelectorTabs();
+      renderCurrentDayContent();
+    }
+
+    function getCategoryMarkerColor(category) {
+      switch (category) {
+        case "景點": return "#3A5A40";
+        case "美食": return "#C84B31";
+        case "購物": return "#B8860B";
+        default: return "#2563EB";
+      }
+    }
+
+    function getCategoryBadgeStyle(category) {
+      switch (category) {
+        case "景點": return "bg-kyoto-matchaPale text-kyoto-matcha";
+        case "美食": return "bg-kyoto-toriiPale text-kyoto-torii";
+        case "購物": return "bg-kyoto-goldPale text-amber-800";
+        default: return "bg-blue-100 text-blue-800";
+      }
+    }
+
+    function renderCurrentDayContent() {
+      const dayObj = ITINERARY_DATA[currentDayIndex];
+
+      // 1. Update Day Banner
+      const banner = document.getElementById("daySummaryBanner");
+      banner.innerHTML = `
+        <div class="space-y-1">
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="px-2.5 py-0.5 rounded-full bg-kyoto-matcha text-white text-xs font-bold">Day ${dayObj.day}｜${dayObj.dateStr}</span>
+            <span class="px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 text-xs font-semibold">${dayObj.ticketBadge}</span>
+          </div>
+          <h2 class="text-base md:text-lg font-serif-tc font-bold text-kyoto-ink pt-0.5">${dayObj.title}</h2>
+          <p class="text-xs text-kyoto-muted"><i class="fa-solid fa-lightbulb text-amber-500 mr-1"></i>${dayObj.weatherTip}</p>
+        </div>
+        <div class="flex items-center gap-2 self-start md:self-center">
+          <a href="https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(HOTEL_QUERY)}&destination=${encodeURIComponent(dayObj.stops[0].mapQuery)}&travelmode=transit"
+             target="_blank" rel="noopener noreferrer"
+             class="px-3 py-2 rounded-xl bg-kyoto-matchaPale hover:bg-kyoto-matcha hover:text-white text-kyoto-matcha text-xs font-bold transition whitespace-nowrap">
+            <i class="fa-solid fa-route mr-1"></i>從飯店出發至首站導航
+          </a>
+        </div>
+      `;
+
+      // 2. Update Map Header & Multi-stop Google Maps Route Link
+      document.getElementById("mapHeaderTitle").textContent = `Day ${dayObj.day}（${dayObj.dateStr}）路線圖`;
+      const waypoints = dayObj.stops.slice(1, -1).map(s => encodeURIComponent(s.mapQuery)).join("|");
+      const firstStop = encodeURIComponent(dayObj.stops[0].mapQuery);
+      const lastStop = encodeURIComponent(dayObj.stops[dayObj.stops.length - 1].mapQuery);
+      const multiRouteUrl = `https://www.google.com/maps/dir/?api=1&origin=${firstStop}&destination=${lastStop}${waypoints ? `&waypoints=${waypoints}` : ""}&travelmode=transit`;
+      document.getElementById("googleMapsDayRouteLink").href = multiRouteUrl;
+
+      // 3. Render Stop Cards
+      const stopsContainer = document.getElementById("dayStopsContainer");
+      stopsContainer.innerHTML = dayObj.stops.map((stop, sIdx) => {
+        const num = sIdx + 1;
+        const markerColor = getCategoryMarkerColor(stop.category);
+        const badgeStyle = getCategoryBadgeStyle(stop.category);
+        const searchUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(stop.mapQuery)}`;
+        const dirUrl = `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(stop.originQuery)}&destination=${encodeURIComponent(stop.mapQuery)}&travelmode=transit`;
+        const twdEst = stop.estCostCurrency === "JPY"
+          ? Math.round(stop.estCostAmount * exchangeRate)
+          : stop.estCostAmount;
+
+        return `
+          <article id="stopCard-${sIdx}" class="bg-white rounded-2xl p-4 md:p-5 border border-kyoto-border shadow-sm transition-all hover:border-kyoto-matcha/60">
+            <!-- Top Row: Number, Time, Title & Category Badge -->
+            <div class="flex items-start justify-between gap-2">
+              <div class="flex items-start gap-3">
+                <button onclick="focusStopOnMap(${sIdx})"
+                        style="background-color: ${markerColor}"
+                        class="w-8 h-8 rounded-full text-white font-bold text-sm flex items-center justify-center flex-shrink-0 shadow-sm mt-0.5 hover:scale-105 transition"
+                        title="在地圖上定位">
+                  ${num}
+                </button>
+                <div>
+                  <div class="flex flex-wrap items-center gap-2">
+                    <span class="text-xs font-extrabold text-kyoto-matcha bg-kyoto-matchaPale px-2 py-0.5 rounded-md">
+                      <i class="fa-regular fa-clock mr-1"></i>${stop.time}
+                    </span>
+                    <span class="text-xs font-bold px-2 py-0.5 rounded-md ${badgeStyle}">${stop.category}</span>
+                    ${stop.estCostAmount > 0 ? `
+                      <span class="text-[11px] text-kyoto-muted font-medium">
+                        預估：${stop.estCostCurrency === "JPY" ? `¥${stop.estCostAmount.toLocaleString()} (約NT$${twdEst.toLocaleString()})` : `NT$${stop.estCostAmount.toLocaleString()}`}
+                      </span>
+                    ` : ""}
+                  </div>
+                  <h3 class="text-base md:text-lg font-bold text-kyoto-ink mt-1">${stop.name}</h3>
+                </div>
+              </div>
+            </div>
+
+            <!-- Point-to-Point Transport Box -->
+            <div class="mt-3 p-3 rounded-xl bg-stone-100/90 border border-stone-200/80 text-xs text-kyoto-ink flex items-start gap-2">
+              <i class="fa-solid fa-train-subway text-kyoto-matcha mt-0.5"></i>
+              <div class="flex-1">
+                <span class="font-bold text-kyoto-matcha">點對點交通動線：</span>
+                <span>${stop.transportFromPrev}</span>
+              </div>
+            </div>
+
+            <!-- Pro Tips & Pitfalls Box -->
+            <div class="mt-2.5 p-3 rounded-xl bg-amber-50/70 border border-amber-200/70 text-xs text-kyoto-ink flex items-start gap-2">
+              <i class="fa-solid fa-star text-amber-500 mt-0.5"></i>
+              <div class="flex-1 leading-relaxed">
+                ${stop.tips}
+              </div>
+            </div>
+
+            <!-- Interactive Action Buttons -->
+            <div class="mt-3.5 pt-3 border-t border-kyoto-border flex flex-wrap items-center justify-between gap-2">
+              <div class="flex flex-wrap items-center gap-1.5">
+                <button onclick="focusStopOnMap(${sIdx})"
+                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-kyoto-matchaPale hover:bg-kyoto-matcha hover:text-white text-kyoto-matcha text-xs font-semibold transition">
+                  <i class="fa-solid fa-location-crosshairs"></i>
+                  <span>地圖定位</span>
+                </button>
+                <a href="${searchUrl}" target="_blank" rel="noopener noreferrer"
+                   class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-stone-100 hover:bg-stone-200 text-kyoto-ink text-xs font-medium transition">
+                  <i class="fa-solid fa-map-pin text-kyoto-torii"></i>
+                  <span>Google 點位</span>
+                </a>
+                <a href="${dirUrl}" target="_blank" rel="noopener noreferrer"
+                   class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-600 hover:text-white text-blue-700 text-xs font-semibold transition">
+                  <i class="fa-solid fa-diamond-turn-right"></i>
+                  <span>從上一站導航</span>
+                </a>
+              </div>
+
+              <button onclick="quickRecordStopExpense(${dayObj.day}, ${sIdx})"
+                      class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-kyoto-toriiPale hover:bg-kyoto-torii hover:text-white text-kyoto-torii text-xs font-bold transition">
+                <i class="fa-solid fa-plus"></i>
+                <span>記一筆花費</span>
+              </button>
+            </div>
+          </article>
+        `;
+      }).join("");
+
+      // 4. Update map markers & route line
+      if (mapApi) mapApi.showDay(dayObj);
+    }
+
+    function fitCurrentDayMapBounds() {
+      if (mapApi) mapApi.fitDay();
+    }
+
+    function focusHotelOnMap() {
+      if (mapApi) mapApi.focusHotel();
+    }
+
+    function focusStopOnMap(stopIdx) {
+      if (!mapApi) return;
+      mapApi.focusStop(stopIdx);
+      highlightStopCard(stopIdx);
+
+      // On mobile screens, scroll smoothly to the map if needed
+      if (window.innerWidth < 1024) {
+        document.getElementById("kyotoMap").scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+    }
+
+    function highlightStopCard(stopIdx) {
+      document.querySelectorAll("[id^='stopCard-']").forEach(el => {
+        el.classList.remove("stop-card-active");
+      });
+      const target = document.getElementById(`stopCard-${stopIdx}`);
+      if (target) {
+        target.classList.add("stop-card-active");
+      }
+    }
+
+    function toggleMobileMapSize() {
+      const mapEl = document.getElementById("kyotoMap");
+      if (mapEl.classList.contains("h-64")) {
+        mapEl.classList.remove("h-64");
+        mapEl.classList.add("h-96");
+      } else {
+        mapEl.classList.remove("h-96");
+        mapEl.classList.add("h-64");
+      }
+      setTimeout(() => {
+        if (mapApi) mapApi.resize();
+      }, 310);
+    }
+
+    // Quick Add Expense from an Itinerary Stop Card
+    function quickRecordStopExpense(dayNum, stopIdx) {
+      const dayObj = ITINERARY_DATA[dayNum - 1];
+      const stop = dayObj.stops[stopIdx];
+      if (!stop) return;
+
+      switchMainTab("expense");
+      resetExpenseForm();
+
+      document.getElementById("expDay").value = `Day ${dayNum}`;
+      document.getElementById("expCategory").value = stop.expCat || "餐飲美食";
+      document.getElementById("expTitle").value = `${stop.name.split("（")[0]} (${stop.estCostNote || "行程支出"})`;
+      document.getElementById("expCurrency").value = stop.estCostCurrency || "JPY";
+      document.getElementById("expAmount").value = stop.estCostAmount > 0 ? stop.estCostAmount : "";
+      updateFormConvertedPreview();
+
+      document.getElementById("expenseForm").scrollIntoView({ behavior: "smooth", block: "center" });
+      document.getElementById("expAmount").focus();
+      showToast(`已帶入「${stop.name.split("（")[0]}」，請確認金額後點擊儲存！`);
+    }
+
+    // =========================================================================
+    // 7. EXPENSE TRACKER, CURRENCY CONVERTER & SPLIT CALCULATOR
+    // =========================================================================
+
+    // source === "live" when called from fetchLiveExchangeRate; otherwise it is a manual edit
+    function updateExchangeRate(val, source) {
+      const parsed = parseFloat(val);
+      if (isNaN(parsed) || parsed <= 0) return;
+      exchangeRate = Math.round(parsed * 10000) / 10000;
+      storageSet(STORAGE_KEYS.RATE, String(exchangeRate));
+      document.getElementById("rateInput").value = exchangeRate;
+      document.getElementById("navRateDisplay").textContent = exchangeRate;
+      convertQuickCurrency("JPY");
+      updateFormConvertedPreview();
+      renderCurrentDayContent();
+      renderExpenseSystem();
+
+      if (source !== "live") {
+        storageSet(STORAGE_KEYS.RATE_MODE, "manual");
+        setRateStatus("匯率來源：手動設定（點「即時匯率」可改回自動抓取）");
+        showToast(`匯率已更新為 1 JPY = ${exchangeRate} TWD`);
+      }
+    }
+
+    function setRateStatus(text) {
+      document.getElementById("rateStatusText").textContent = text;
+    }
+
+    // Fetch live JPY→TWD rate from ExchangeRate-API (open access, no key needed)
+    async function fetchLiveExchangeRate(manualTrigger) {
+      if (manualTrigger) setRateStatus("匯率來源：正在抓取即時匯率…");
+      try {
+        const res = await fetch("https://open.er-api.com/v6/latest/JPY");
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        const data = await res.json();
+        const twd = data && data.rates ? data.rates.TWD : null;
+        if (data.result !== "success" || !twd) throw new Error("API 回應中沒有 TWD 匯率");
+
+        storageSet(STORAGE_KEYS.RATE_MODE, "live");
+        updateExchangeRate(twd, "live");
+        const updatedAt = data.time_last_update_unix
+          ? new Date(data.time_last_update_unix * 1000).toLocaleString("zh-TW", { hour12: false })
+          : "剛剛";
+        setRateStatus(`匯率來源：ExchangeRate-API 即時匯率（更新於 ${updatedAt}）`);
+        if (manualTrigger) showToast(`已更新即時匯率：1 JPY = ${exchangeRate} TWD`);
+      } catch (err) {
+        console.warn("Exchange rate fetch failed:", err);
+        setRateStatus(`匯率來源：無法取得即時匯率，暫用 1 JPY = ${exchangeRate} TWD`);
+        if (manualTrigger) showToast("即時匯率抓取失敗，請檢查網路或手動輸入匯率");
+      }
+    }
+
+    function convertQuickCurrency(source) {
+      const jpyEl = document.getElementById("quickJpyInput");
+      const twdEl = document.getElementById("quickTwdInput");
+      if (source === "JPY") {
+        const jpy = parseFloat(jpyEl.value);
+        twdEl.value = isNaN(jpy) ? "" : Math.round(jpy * exchangeRate);
+      } else {
+        const twd = parseFloat(twdEl.value);
+        jpyEl.value = isNaN(twd) ? "" : Math.round(twd / exchangeRate);
+      }
+    }
+
+    function saveTravelerNames() {
+      const a = sanitizeName(document.getElementById("travelerAName").value, "旅伴 A");
+      const b = sanitizeName(document.getElementById("travelerBName").value, "旅伴 B");
+      travelerNames = { A: a, B: b };
+      storageSet(STORAGE_KEYS.NAMES, JSON.stringify(travelerNames));
+      syncPayerSelectLabels();
+      renderExpenseSystem();
+      scheduleAutoSync();
+      showToast("已更新旅伴姓名");
+    }
+
+    function syncPayerSelectLabels() {
+      document.getElementById("payerOptA").textContent = `${travelerNames.A} 墊付`;
+      document.getElementById("payerOptB").textContent = `${travelerNames.B} 墊付`;
+    }
+
+    function toTwd(amount, currency) {
+      const num = parseFloat(amount) || 0;
+      return currency === "JPY" ? Math.round(num * exchangeRate) : Math.round(num);
+    }
+
+    function updateFormConvertedPreview() {
+      const cur = document.getElementById("expCurrency").value;
+      const amt = parseFloat(document.getElementById("expAmount").value);
+      const previewEl = document.getElementById("formConvertedPreview");
+      if (isNaN(amt) || amt <= 0) {
+        previewEl.textContent = "";
+        return;
+      }
+      if (cur === "JPY") {
+        previewEl.textContent = `≈ 折合台幣 NT$ ${Math.round(amt * exchangeRate).toLocaleString()}`;
+      } else {
+        previewEl.textContent = `≈ 折合日圓 ¥ ${Math.round(amt / exchangeRate).toLocaleString()}`;
+      }
+    }
+
+    function handleSaveExpense(e) {
+      e.preventDefault();
+      const editId = document.getElementById("editExpenseId").value;
+      const item = normalizeExpense({
+        id: editId || "exp_" + Date.now(),
+        day: document.getElementById("expDay").value,
+        category: document.getElementById("expCategory").value,
+        title: document.getElementById("expTitle").value.trim(),
+        currency: document.getElementById("expCurrency").value,
+        amount: parseFloat(document.getElementById("expAmount").value) || 0,
+        payer: document.getElementById("expPayer").value,
+        split: document.getElementById("expSplit").value
+      });
+
+      if (editId) {
+        const idx = expenses.findIndex(x => x.id === editId);
+        if (idx !== -1) expenses[idx] = item;
+        showToast("已更新帳目！");
+      } else {
+        expenses.unshift(item);
+        showToast("已新增一筆帳目！");
+      }
+
+      saveExpensesToStorage();
+      resetExpenseForm();
+      renderExpenseSystem();
+      scheduleAutoSync();
+    }
+
+    function editExpenseItem(id) {
+      const item = expenses.find(x => x.id === id);
+      if (!item) return;
+
+      document.getElementById("editExpenseId").value = item.id;
+      document.getElementById("expDay").value = item.day;
+      document.getElementById("expCategory").value = item.category;
+      document.getElementById("expTitle").value = item.title;
+      document.getElementById("expCurrency").value = item.currency;
+      document.getElementById("expAmount").value = item.amount;
+      document.getElementById("expPayer").value = item.payer;
+      document.getElementById("expSplit").value = item.split;
+
+      document.getElementById("expenseFormTitle").textContent = "編輯支出紀錄";
+      document.getElementById("cancelEditBtn").classList.remove("hidden");
+      updateFormConvertedPreview();
+      document.getElementById("expenseForm").scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+
+    function deleteExpenseItem(id) {
+      expenses = expenses.filter(x => x.id !== id);
+      saveExpensesToStorage();
+      renderExpenseSystem();
+      scheduleAutoSync();
+      showToast("已刪除該筆帳目");
+    }
+
+    function resetExpenseForm() {
+      document.getElementById("editExpenseId").value = "";
+      document.getElementById("expTitle").value = "";
+      document.getElementById("expAmount").value = "";
+      document.getElementById("formConvertedPreview").textContent = "";
+      document.getElementById("expenseFormTitle").textContent = "新增支出紀錄";
+      document.getElementById("cancelEditBtn").classList.add("hidden");
+    }
+
+    function renderExpenseSystem() {
+      const CORE_BUDGET_TARGET = 65000;
+      let coreTotalTwd = 0;
+      let shopTotalTwd = 0;
+
+      const catTotals = {
+        "機票住宿": 0,
+        "餐飲美食": 0,
+        "交通移動": 0,
+        "門票和服": 0,
+        "其他保險網卡": 0,
+        "購物伴手禮": 0
+      };
+
+      // Split calculation variables (in TWD)
+      let paidByA = 0;
+      let paidByB = 0;
+      let shareOfA = 0;
+      let shareOfB = 0;
+
+      expenses.forEach(item => {
+        const twd = toTwd(item.amount, item.currency);
+        if (catTotals[item.category] !== undefined) {
+          catTotals[item.category] += twd;
+        }
+        if (item.category === "購物伴手禮") {
+          shopTotalTwd += twd;
+        } else {
+          coreTotalTwd += twd;
+        }
+
+        // Who paid & who owes (only when paid by A or B, not public pool)
+        if (item.payer === "A") {
+          paidByA += twd;
+          if (item.split === "EVEN") {
+            shareOfA += twd / 2;
+            shareOfB += twd / 2;
+          } else if (item.split === "SELF") {
+            shareOfA += twd;
+          } else if (item.split === "OTHER") {
+            shareOfB += twd;
+          }
+        } else if (item.payer === "B") {
+          paidByB += twd;
+          if (item.split === "EVEN") {
+            shareOfA += twd / 2;
+            shareOfB += twd / 2;
+          } else if (item.split === "SELF") {
+            shareOfB += twd;
+          } else if (item.split === "OTHER") {
+            shareOfA += twd;
+          }
+        }
+      });
+
+      const grandTotalTwd = coreTotalTwd + shopTotalTwd;
+      const coreRemain = CORE_BUDGET_TARGET - coreTotalTwd;
+      const corePct = Math.min(100, Math.round((coreTotalTwd / CORE_BUDGET_TARGET) * 100));
+      const nameA = escapeHtml(travelerNames.A);
+      const nameB = escapeHtml(travelerNames.B);
+
+      // 1. Update Top Header Dashboard Cards
+      document.getElementById("headerCorePercent").textContent = `${corePct}%`;
+      document.getElementById("headerCoreSpent").textContent = `NT$ ${coreTotalTwd.toLocaleString()}`;
+      document.getElementById("headerCoreRemain").textContent = coreRemain >= 0
+        ? `剩餘可用：NT$ ${coreRemain.toLocaleString()}`
+        : `超出目標：NT$ ${Math.abs(coreRemain).toLocaleString()}`;
+      document.getElementById("headerShopSpent").textContent = `NT$ ${shopTotalTwd.toLocaleString()}`;
+
+      // 2. Update Split Settlement Card
+      const netBalanceA = Math.round(paidByA - shareOfA); // >0 means B owes A
+      const splitCard = document.getElementById("splitResultCard");
+      const headerSplit = document.getElementById("headerSplitSummary");
+
+      document.getElementById("paidByADisplay").textContent = `${travelerNames.A} 已先墊：NT$ ${paidByA.toLocaleString()}`;
+      document.getElementById("paidByBDisplay").textContent = `${travelerNames.B} 已先墊：NT$ ${paidByB.toLocaleString()}`;
+
+      if (Math.abs(netBalanceA) < 5) {
+        splitCard.innerHTML = `
+          <div class="text-center py-1">
+            <div class="text-sm font-bold text-kyoto-matcha">🎉 目前兩人帳目完全平衡，互不相欠！</div>
+          </div>
+        `;
+        headerSplit.textContent = "分帳：目前互不相欠";
+      } else if (netBalanceA > 0) {
+        const eqJpy = Math.round(netBalanceA / exchangeRate);
+        splitCard.innerHTML = `
+          <div class="flex items-center justify-between">
+            <div>
+              <div class="text-xs text-kyoto-muted">結算應付方向</div>
+              <div class="text-sm md:text-base font-bold text-kyoto-ink mt-0.5">
+                <span class="text-kyoto-torii">${nameB}</span> 應給 <span class="text-kyoto-matcha">${nameA}</span>
+              </div>
+            </div>
+            <div class="text-right">
+              <div class="text-base md:text-lg font-extrabold text-kyoto-torii">NT$ ${netBalanceA.toLocaleString()}</div>
+              <div class="text-[11px] text-kyoto-muted">或日幣 ¥ ${eqJpy.toLocaleString()}</div>
+            </div>
+          </div>
+        `;
+        headerSplit.textContent = `${travelerNames.B} 應給 ${travelerNames.A} NT$${netBalanceA.toLocaleString()}`;
+      } else {
+        const oweAmt = Math.abs(netBalanceA);
+        const eqJpy = Math.round(oweAmt / exchangeRate);
+        splitCard.innerHTML = `
+          <div class="flex items-center justify-between">
+            <div>
+              <div class="text-xs text-kyoto-muted">結算應付方向</div>
+              <div class="text-sm md:text-base font-bold text-kyoto-ink mt-0.5">
+                <span class="text-kyoto-torii">${nameA}</span> 應給 <span class="text-kyoto-matcha">${nameB}</span>
+              </div>
+            </div>
+            <div class="text-right">
+              <div class="text-base md:text-lg font-extrabold text-kyoto-torii">NT$ ${oweAmt.toLocaleString()}</div>
+              <div class="text-[11px] text-kyoto-muted">或日幣 ¥ ${eqJpy.toLocaleString()}</div>
+            </div>
+          </div>
+        `;
+        headerSplit.textContent = `${travelerNames.A} 應給 ${travelerNames.B} NT$${oweAmt.toLocaleString()}`;
+      }
+
+      // 3. Update Core Budget Progress Bar
+      document.getElementById("coreSpentLabel").textContent = `已支用：NT$ ${coreTotalTwd.toLocaleString()} (${corePct}%)`;
+      const remainLabel = document.getElementById("coreRemainLabel");
+      const progressBar = document.getElementById("coreProgressBar");
+      if (coreRemain >= 0) {
+        remainLabel.textContent = `剩餘額度：NT$ ${coreRemain.toLocaleString()}`;
+        remainLabel.className = "text-kyoto-matcha font-bold";
+        progressBar.className = "h-full bg-kyoto-matcha transition-all duration-500 rounded-full";
+      } else {
+        remainLabel.textContent = `超過預算：NT$ ${Math.abs(coreRemain).toLocaleString()}`;
+        remainLabel.className = "text-kyoto-torii font-bold";
+        progressBar.className = "h-full bg-kyoto-torii transition-all duration-500 rounded-full";
+      }
+      progressBar.style.width = `${corePct}%`;
+
+      document.getElementById("statCoreTotal").textContent = `NT$ ${coreTotalTwd.toLocaleString()}`;
+      document.getElementById("statCorePerPerson").textContent = `每人 NT$ ${Math.round(coreTotalTwd / 2).toLocaleString()}`;
+      document.getElementById("statShopTotal").textContent = `NT$ ${shopTotalTwd.toLocaleString()}`;
+      document.getElementById("statShopJpy").textContent = `約 ¥ ${Math.round(shopTotalTwd / exchangeRate).toLocaleString()}`;
+      document.getElementById("statGrandTotal").textContent = `NT$ ${grandTotalTwd.toLocaleString()}`;
+      document.getElementById("statGrandPerPerson").textContent = `每人 NT$ ${Math.round(grandTotalTwd / 2).toLocaleString()}`;
+
+      // 4. Update Category Breakdown Bars
+      const catContainer = document.getElementById("categoryBreakdownContainer");
+      catContainer.innerHTML = Object.keys(CATEGORY_META).map(catName => {
+        const meta = CATEGORY_META[catName];
+        const spent = catTotals[catName] || 0;
+        const pct = Math.min(100, Math.round((spent / meta.targetTwd) * 100));
+        return `
+          <div>
+            <div class="flex items-center justify-between mb-1">
+              <span class="font-semibold text-kyoto-ink flex items-center gap-1.5">
+                <i class="fa-solid ${meta.icon} text-kyoto-muted w-4 text-center"></i>
+                <span>${catName}</span>
+              </span>
+              <span class="text-kyoto-muted">
+                <strong class="text-kyoto-ink">NT$ ${spent.toLocaleString()}</strong> / 預估 NT$ ${meta.targetTwd.toLocaleString()}
+              </span>
+            </div>
+            <div class="w-full h-2 bg-stone-100 rounded-full overflow-hidden">
+              <div class="h-full ${meta.color} rounded-full transition-all duration-500" style="width: ${pct}%"></div>
+            </div>
+          </div>
+        `;
+      }).join("");
+
+      // 5. Render Filtered Expense List
+      const filterDay = document.getElementById("filterDaySelect").value;
+      const filterCat = document.getElementById("filterCatSelect").value;
+
+      const filtered = expenses.filter(item => {
+        const matchDay = filterDay === "ALL" || item.day === filterDay;
+        const matchCat = filterCat === "ALL" || item.category === filterCat;
+        return matchDay && matchCat;
+      });
+
+      const listEl = document.getElementById("expenseListContainer");
+      if (filtered.length === 0) {
+        listEl.innerHTML = `
+          <div class="py-10 text-center text-xs text-kyoto-muted">
+            目前此篩選條件下沒有帳目紀錄。您可以從左側表單新增，或從行程卡點擊「記一筆花費」！
+          </div>
+        `;
+        return;
+      }
+
+      // Every value below may come from the shared Google Sheet, so all of it is escaped
+      listEl.innerHTML = filtered.map(item => {
+        const meta = CATEGORY_META[item.category] || CATEGORY_META["餐飲美食"];
+        const twd = toTwd(item.amount, item.currency);
+        const payerLabel = item.payer === "A" ? nameA : item.payer === "B" ? nameB : "公費錢包";
+        const splitLabel = item.split === "EVEN" ? "兩人平分" : item.split === "SELF" ? "個人自付" : "代墊對方";
+        const safeId = escapeHtml(item.id);
+
+        return `
+          <div class="py-3 flex items-center justify-between gap-3 hover:bg-stone-50/80 px-2 rounded-xl transition">
+            <div class="flex items-start gap-3 min-w-0">
+              <div class="w-9 h-9 rounded-xl ${meta.badge} flex items-center justify-center flex-shrink-0 mt-0.5">
+                <i class="fa-solid ${meta.icon}"></i>
+              </div>
+              <div class="min-w-0">
+                <div class="flex flex-wrap items-center gap-1.5">
+                  <span class="text-[11px] font-bold px-2 py-0.5 rounded bg-stone-200/80 text-kyoto-ink">${escapeHtml(item.day)}</span>
+                  <span class="text-[11px] font-semibold px-2 py-0.5 rounded ${meta.badge}">${escapeHtml(item.category)}</span>
+                  <span class="text-[11px] text-kyoto-muted">${payerLabel}・${splitLabel}</span>
+                </div>
+                <div class="text-xs md:text-sm font-bold text-kyoto-ink mt-1 truncate">${escapeHtml(item.title)}</div>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-3 flex-shrink-0">
+              <div class="text-right">
+                <div class="text-xs md:text-sm font-extrabold text-kyoto-ink">
+                  NT$ ${twd.toLocaleString()}
+                </div>
+                ${item.currency === "JPY" ? `
+                  <div class="text-[11px] text-kyoto-muted">¥ ${Number(item.amount).toLocaleString()}</div>
+                ` : `
+                  <div class="text-[11px] text-kyoto-muted">台幣計價</div>
+                `}
+              </div>
+              <div class="flex items-center gap-1">
+                <button onclick="editExpenseItem('${safeId}')"
+                        class="p-1.5 rounded-lg text-kyoto-muted hover:text-kyoto-matcha hover:bg-kyoto-matchaPale transition" title="編輯">
+                  <i class="fa-solid fa-pen-to-square text-xs"></i>
+                </button>
+                <button onclick="deleteExpenseItem('${safeId}')"
+                        class="p-1.5 rounded-lg text-kyoto-muted hover:text-kyoto-torii hover:bg-red-50 transition" title="刪除">
+                  <i class="fa-solid fa-trash-can text-xs"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
+
+    // Load full 6-day estimated expenses from itinerary stops
+    function loadSampleBudgetExpenses() {
+      const combined = JSON.parse(JSON.stringify(FIXED_INITIAL_EXPENSES));
+      ITINERARY_DATA.forEach(d => {
+        d.stops.forEach((s, idx) => {
+          if (s.estCostAmount > 0) {
+            combined.push({
+              id: `sample_d${d.day}_${idx}`,
+              day: `Day ${d.day}`,
+              category: s.expCat || "餐飲美食",
+              title: `${s.name.split("（")[0]} (${s.estCostNote})`,
+              currency: s.estCostCurrency || "JPY",
+              amount: s.estCostAmount,
+              payer: idx % 2 === 0 ? "A" : "B",
+              split: "EVEN"
+            });
+          }
+        });
+      });
+      expenses = combined;
+      saveExpensesToStorage();
+      renderExpenseSystem();
+      scheduleAutoSync();
+      showToast("已載入 6 天完整預估車資、門票、和服與餐飲預算範本！");
+    }
+
+    function openResetConfirmModal() {
+      openModal("resetConfirmModal");
+    }
+
+    function confirmResetToFixedOnly() {
+      expenses = JSON.parse(JSON.stringify(FIXED_INITIAL_EXPENSES));
+      saveExpensesToStorage();
+      renderExpenseSystem();
+      scheduleAutoSync();
+      closeModal("resetConfirmModal");
+      showToast("已重置為僅保留確定之機票、靜鐵住宿與住宿稅");
+    }
+
+    // Spreadsheet apps execute cells starting with = + - @ as formulas, so neutralise them
+    function csvCell(value) {
+      let text = String(value);
+      if (/^[=+\-@\t\r]/.test(text)) text = "'" + text;
+      return `"${text.replace(/"/g, '""')}"`;
+    }
+
+    function exportExpensesCSV() {
+      const headers = ["日期", "分類", "項目名稱", "原始幣別", "原始金額", "折合台幣(NT$)", "付款人", "分攤方式"];
+      const rows = expenses.map(item => {
+        const twd = toTwd(item.amount, item.currency);
+        const payer = item.payer === "A" ? travelerNames.A : item.payer === "B" ? travelerNames.B : "公費錢包";
+        const split = item.split === "EVEN" ? "兩人平分" : item.split === "SELF" ? "個人自付" : "代墊對方";
+        return [item.day, item.category, csvCell(item.title), item.currency, item.amount, twd, csvCell(payer), split].join(",");
+      });
+
+      const csvContent = "﻿" + [headers.join(","), ...rows].join("\n");
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "2027京都自由行_雙人記帳明細.csv";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast("已下載 CSV 帳單檔案！");
+    }
+
+    function copyTextToClipboard(text) {
+      if (navigator.clipboard && window.isSecureContext) {
+        return navigator.clipboard.writeText(text);
+      }
+      // Fallback for file:// pages and older mobile browsers
+      const textarea = document.createElement("textarea");
+      textarea.value = text;
+      textarea.style.position = "fixed";
+      textarea.style.opacity = "0";
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand("copy");
+      document.body.removeChild(textarea);
+      return Promise.resolve();
+    }
+
+    function copyExpenseSummary() {
+      const coreText = document.getElementById("statCoreTotal").textContent;
+      const shopText = document.getElementById("statShopTotal").textContent;
+      const grandText = document.getElementById("statGrandTotal").textContent;
+      const splitText = document.getElementById("headerSplitSummary").textContent;
+
+      const summary = [
+        "【2027/01/10-01/15 京都自由行帳務摘要】",
+        `• 核心旅費合計：${coreText} (目標 NT$65,000)`,
+        `• 購物伴手禮合計：${shopText}`,
+        `• 整趟總花費：${grandText}`,
+        `• 雙人分帳結算：${splitText}`
+      ].join("\n");
+
+      copyTextToClipboard(summary)
+        .then(() => showToast("已複製帳務結算摘要至剪貼簿！"))
+        .catch(() => showToast("複製失敗，請手動選取文字"));
+    }
+
+    // =========================================================================
+    // 8. KYOTO LIVE WEATHER (Open-Meteo, no API key)
+    // =========================================================================
+    const KYOTO_WEATHER_COORDS = { lat: 35.0116, lng: 135.7681 };
+
+    const WEATHER_CODE_MAP = {
+      0: ["☀️", "晴朗"], 1: ["🌤️", "大致晴朗"], 2: ["⛅", "局部多雲"], 3: ["☁️", "陰天"],
+      45: ["🌫️", "霧"], 48: ["🌫️", "霧凇"],
+      51: ["🌦️", "毛毛雨"], 53: ["🌦️", "毛毛雨"], 55: ["🌧️", "濃毛毛雨"],
+      56: ["🌧️", "凍毛毛雨"], 57: ["🌧️", "凍毛毛雨"],
+      61: ["🌧️", "小雨"], 63: ["🌧️", "中雨"], 65: ["🌧️", "大雨"],
+      66: ["🌧️", "凍雨"], 67: ["🌧️", "強凍雨"],
+      71: ["🌨️", "小雪"], 73: ["🌨️", "中雪"], 75: ["❄️", "大雪"], 77: ["🌨️", "米雪"],
+      80: ["🌦️", "陣雨"], 81: ["🌧️", "強陣雨"], 82: ["⛈️", "豪雨"],
+      85: ["🌨️", "陣雪"], 86: ["❄️", "強陣雪"],
+      95: ["⛈️", "雷雨"], 96: ["⛈️", "雷雨夾冰雹"], 99: ["⛈️", "強雷雨夾冰雹"]
+    };
+
+    function describeWeather(code) {
+      return WEATHER_CODE_MAP[code] || ["🌡️", "天氣資料"];
+    }
+
+    async function fetchKyotoWeather(manualTrigger) {
+      const url = "https://api.open-meteo.com/v1/forecast"
+        + `?latitude=${KYOTO_WEATHER_COORDS.lat}&longitude=${KYOTO_WEATHER_COORDS.lng}`
+        + "&current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m"
+        + "&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,snowfall_sum"
+        + "&timezone=Asia%2FTokyo&forecast_days=7";
+
+      try {
+        const res = await fetch(url);
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        const data = await res.json();
+        renderWeather(data);
+        if (manualTrigger) showToast("已更新京都即時天氣");
+      } catch (err) {
+        console.warn("Weather fetch failed:", err);
+        document.getElementById("headerWeatherIcon").textContent = "⚠️";
+        document.getElementById("headerWeatherText").textContent = "天氣暫時無法載入";
+        document.getElementById("weatherForecastGrid").innerHTML =
+          '<div class="col-span-full py-6 text-xs text-kyoto-muted">無法連線至 Open-Meteo，請確認網路後點「重新整理」。</div>';
+        if (manualTrigger) showToast("天氣資料抓取失敗，請稍後再試");
+      }
+    }
+
+    function renderWeather(data) {
+      const cur = data.current || {};
+      const [icon, desc] = describeWeather(cur.weather_code);
+      const temp = Math.round(cur.temperature_2m);
+
+      document.getElementById("headerWeatherIcon").textContent = icon;
+      document.getElementById("headerWeatherText").textContent = `京都 ${temp}°C ${desc}`;
+
+      document.getElementById("modalWeatherCurrentIcon").textContent = icon;
+      document.getElementById("modalWeatherCurrentTemp").textContent = `${temp}°C ${desc}`;
+      document.getElementById("modalWeatherCurrentDesc").textContent =
+        `體感 ${Math.round(cur.apparent_temperature)}°C ｜ 濕度 ${cur.relative_humidity_2m}% ｜ 風速 ${Math.round(cur.wind_speed_10m)} km/h`;
+
+      const daily = data.daily || {};
+      const days = daily.time || [];
+      const weekdays = ["日", "一", "二", "三", "四", "五", "六"];
+
+      document.getElementById("weatherForecastGrid").innerHTML = days.map((dateStr, i) => {
+        const d = new Date(dateStr + "T00:00:00");
+        const [dIcon, dDesc] = describeWeather(daily.weather_code[i]);
+        const pop = daily.precipitation_probability_max ? Number(daily.precipitation_probability_max[i]) : null;
+        const snow = daily.snowfall_sum ? Number(daily.snowfall_sum[i]) || 0 : 0;
+        return `
+          <div class="rounded-xl border ${i === 0 ? "border-kyoto-matcha bg-kyoto-matchaPale/60" : "border-kyoto-border bg-kyoto-bg"} p-2">
+            <div class="text-[11px] font-bold text-kyoto-ink">${i === 0 ? "今天" : `${d.getMonth() + 1}/${d.getDate()}`} (${weekdays[d.getDay()]})</div>
+            <div class="text-2xl my-1">${dIcon}</div>
+            <div class="text-[11px] text-kyoto-muted">${dDesc}</div>
+            <div class="text-xs font-bold mt-1">
+              <span class="text-kyoto-torii">${Math.round(daily.temperature_2m_max[i])}°</span>
+              <span class="text-kyoto-muted">/</span>
+              <span class="text-blue-700">${Math.round(daily.temperature_2m_min[i])}°</span>
+            </div>
+            <div class="text-[11px] text-blue-700 mt-0.5">☔ ${pop === null || isNaN(pop) ? "--" : pop}%</div>
+            ${snow > 0 ? `<div class="text-[11px] text-sky-700">❄️ ${snow} cm</div>` : ""}
+          </div>
+        `;
+      }).join("");
+    }
+
+    // =========================================================================
+    // 9. GOOGLE SHEETS TWO-WAY SYNC (via Apps Script Web App)
+    // =========================================================================
+    const SYNC_DOT_CLASSES = {
+      none: "bg-stone-400",
+      syncing: "bg-amber-400 animate-pulse",
+      linked: "bg-emerald-400",
+      ok: "bg-emerald-400",
+      error: "bg-red-500"
+    };
+
+    function isValidGasUrl(url) {
+      return /^https:\/\/script\.google\.com\/(a\/macros\/[^/]+|macros)\/s\/[\w-]+\/exec\/?$/.test(url);
+    }
+
+    function nowTimeLabel() {
+      const d = new Date();
+      return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+    }
+
+    function setSyncStatus(state, detail) {
+      const dotClass = SYNC_DOT_CLASSES[state] || SYNC_DOT_CLASSES.none;
+      document.getElementById("headerSyncDot").className = `w-2 h-2 rounded-full ${dotClass}`;
+      document.getElementById("expenseSyncDot").className = `w-2.5 h-2.5 rounded-full ${dotClass}`;
+
+      const headerLabel = document.getElementById("headerSyncLabel");
+      const title = document.getElementById("expenseSyncTitle");
+      const subtitle = document.getElementById("expenseSyncSubtitle");
+
+      if (state === "none") {
+        headerLabel.textContent = "試算表同步";
+        title.textContent = "Google 試算表雲端同步：尚未綁定（目前自動儲存於本機）";
+        subtitle.textContent = "綁定 Google 試算表後，兩支手機可即時雙向同步帳目，並在雲端試算表自動整理出完整分帳報表！";
+      } else if (state === "syncing") {
+        headerLabel.textContent = "同步中…";
+        title.textContent = "Google 試算表雲端同步：同步中…";
+        subtitle.textContent = detail || "正在與 Google 試算表交換資料，請稍候";
+      } else if (state === "linked") {
+        headerLabel.textContent = "已綁定試算表";
+        title.textContent = "Google 試算表雲端同步：已綁定";
+        subtitle.textContent = detail || "記帳前建議先點「讀取雲端」，取得旅伴剛輸入的最新帳目";
+      } else if (state === "ok") {
+        headerLabel.textContent = `已同步 ${nowTimeLabel()}`;
+        title.textContent = `Google 試算表雲端同步：已連線（${nowTimeLabel()}）`;
+        subtitle.textContent = detail || "記帳前建議先點「讀取雲端」，取得旅伴剛輸入的最新帳目";
+      } else {
+        headerLabel.textContent = "同步失敗";
+        title.textContent = "Google 試算表雲端同步：同步失敗（帳目仍安全保存在本機）";
+        subtitle.textContent = detail || "請檢查網路，或確認 Apps Script 部署權限為「所有人」";
+      }
+    }
+
+    function showGasFeedback(text, isError) {
+      const el = document.getElementById("gasStatusFeedback");
+      el.textContent = text;
+      el.className = `text-xs font-bold ${isError ? "text-kyoto-torii" : "text-kyoto-matcha"}`;
+    }
+
+    function describeSyncError(err) {
+      // A CORS/network TypeError usually means the deployment isn't public or the URL is wrong
+      if (err instanceof TypeError) {
+        return "無法連線：請確認網址正確、已部署為「網頁應用程式」且「誰可以存取」設為「所有人」";
+      }
+      return err && err.message ? err.message : String(err);
+    }
+
+    async function parseGasResponse(res) {
+      if (!res.ok) throw new Error(`Apps Script 回應錯誤 (HTTP ${res.status})`);
+      const text = await res.text();
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch (e) {
+        throw new Error("回應不是 JSON：請確認已貼上最新程式碼、重新部署，且權限為「所有人」");
+      }
+      if (data.status !== "ok") throw new Error(data.message || "Apps Script 回傳失敗狀態");
+      return data;
+    }
+
+    async function gasGet() {
+      const sep = gasUrl.includes("?") ? "&" : "?";
+      const res = await fetch(`${gasUrl}${sep}t=${Date.now()}`, { method: "GET", redirect: "follow" });
+      return parseGasResponse(res);
+    }
+
+    async function gasPost(payload) {
+      // text/plain keeps this a "simple" CORS request; Apps Script cannot answer a preflight
+      const res = await fetch(gasUrl, {
+        method: "POST",
+        redirect: "follow",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify(payload)
+      });
+      return parseGasResponse(res);
+    }
+
+    // Anyone holding the Apps Script URL can write to the sheet, so every field is
+    // forced back into a known shape before it is stored or rendered
+    function normalizeExpense(raw) {
+      const item = raw || {};
+      const id = String(item.id || "");
+      return {
+        id: /^[\w-]{1,64}$/.test(id) ? id : `exp_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+        day: VALID_EXPENSE_DAYS.includes(item.day) ? item.day : "行前",
+        category: Object.prototype.hasOwnProperty.call(CATEGORY_META, item.category) ? item.category : "餐飲美食",
+        title: String(item.title == null ? "" : item.title).slice(0, 200),
+        currency: item.currency === "TWD" ? "TWD" : "JPY",
+        amount: Math.max(0, Number(item.amount) || 0),
+        payer: ["A", "B", "POOL"].includes(item.payer) ? item.payer : "A",
+        split: ["EVEN", "SELF", "OTHER"].includes(item.split) ? item.split : "EVEN"
+      };
+    }
+
+    function applyRemoteData(data) {
+      expenses = (Array.isArray(data.expenses) ? data.expenses : []).map(normalizeExpense);
+      saveExpensesToStorage();
+
+      const meta = data.meta || {};
+      if (meta.A || meta.B) {
+        travelerNames = { A: sanitizeName(meta.A, "旅伴 A"), B: sanitizeName(meta.B, "旅伴 B") };
+        storageSet(STORAGE_KEYS.NAMES, JSON.stringify(travelerNames));
+        document.getElementById("travelerAName").value = travelerNames.A;
+        document.getElementById("travelerBName").value = travelerNames.B;
+        syncPayerSelectLabels();
+      }
+      renderExpenseSystem();
+    }
+
+    async function pushToGoogleSheet(manualTrigger) {
+      if (!gasUrl) {
+        if (manualTrigger) {
+          showToast("請先綁定 Google 試算表網址");
+          openModal("sheetsSyncModal");
+        }
+        return false;
+      }
+      setSyncStatus("syncing", "正在上傳帳目至 Google 試算表…");
+      try {
+        const result = await gasPost({ expenses, names: travelerNames, rate: exchangeRate });
+        setSyncStatus("ok", `已上傳 ${result.count} 筆帳目至 Google 試算表`);
+        if (manualTrigger) showToast(`已覆寫上傳 ${result.count} 筆帳目至雲端！`);
+        return true;
+      } catch (err) {
+        console.error("Push failed:", err);
+        setSyncStatus("error", describeSyncError(err));
+        if (manualTrigger) showToast("上傳失敗：" + describeSyncError(err));
+        return false;
+      }
+    }
+
+    async function pullFromGoogleSheet() {
+      if (!gasUrl) {
+        showToast("請先綁定 Google 試算表網址");
+        openModal("sheetsSyncModal");
+        return;
+      }
+      setSyncStatus("syncing", "正在從 Google 試算表讀取最新帳目…");
+      try {
+        const data = await gasGet();
+        const count = (data.expenses || []).length;
+        if (count === 0) {
+          // Never wipe local data with an empty sheet
+          setSyncStatus("ok", "雲端試算表目前沒有帳目，本機資料未變更（可點「覆寫上傳」）");
+          showToast("雲端沒有帳目，已保留本機資料");
+          return;
+        }
+        applyRemoteData(data);
+        setSyncStatus("ok", `已從雲端讀取 ${count} 筆帳目`);
+        showToast(`已從雲端讀取 ${count} 筆最新帳目！`);
+      } catch (err) {
+        console.error("Pull failed:", err);
+        setSyncStatus("error", describeSyncError(err));
+        showToast("讀取失敗：" + describeSyncError(err));
+      }
+    }
+
+    async function saveAndTestGasUrl() {
+      const url = document.getElementById("gasWebAppUrlInput").value.trim();
+      if (!isValidGasUrl(url)) {
+        showGasFeedback("❌ 網址格式不正確，應為 https://script.google.com/macros/s/……/exec", true);
+        return;
+      }
+      gasUrl = url;
+      storageSet(STORAGE_KEYS.GAS_URL, gasUrl);
+      showGasFeedback("⏳ 正在測試連線…", false);
+      setSyncStatus("syncing", "正在測試與 Google 試算表的連線…");
+
+      try {
+        const data = await gasGet();
+        const remoteCount = (data.expenses || []).length;
+        if (remoteCount > 0) {
+          // Second phone joining an existing sheet: take the cloud copy
+          applyRemoteData(data);
+          setSyncStatus("ok", `已連線，並從雲端讀取 ${remoteCount} 筆帳目`);
+          showGasFeedback(`✅ 連線成功！已從雲端讀取 ${remoteCount} 筆帳目`, false);
+        } else {
+          // First phone on a blank sheet: seed it with local data
+          const result = await gasPost({ expenses, names: travelerNames, rate: exchangeRate });
+          setSyncStatus("ok", `已連線，並上傳本機 ${result.count} 筆帳目`);
+          showGasFeedback(`✅ 連線成功！雲端是空白試算表，已上傳本機 ${result.count} 筆帳目`, false);
+        }
+        showToast("Google 試算表綁定成功！");
+      } catch (err) {
+        console.error("GAS test failed:", err);
+        setSyncStatus("error", describeSyncError(err));
+        showGasFeedback("❌ " + describeSyncError(err), true);
+      }
+    }
+
+    function disconnectGoogleSheet() {
+      gasUrl = "";
+      storageRemove(STORAGE_KEYS.GAS_URL);
+      document.getElementById("gasWebAppUrlInput").value = "";
+      showGasFeedback("已解除綁定，帳目改為只儲存在本機", false);
+      setSyncStatus("none");
+      showToast("已解除 Google 試算表綁定");
+    }
+
+    function toggleAutoSyncOption(checked) {
+      autoSyncEnabled = !!checked;
+      storageSet(STORAGE_KEYS.AUTO_SYNC, autoSyncEnabled ? "on" : "off");
+      showToast(autoSyncEnabled ? "已開啟自動同步" : "已關閉自動同步（可手動覆寫上傳）");
+    }
+
+    // Debounced so rapid edits produce a single upload
+    function scheduleAutoSync() {
+      if (!gasUrl || !autoSyncEnabled) return;
+      if (autoSyncTimer) clearTimeout(autoSyncTimer);
+      autoSyncTimer = setTimeout(() => {
+        autoSyncTimer = null;
+        pushToGoogleSheet(false);
+      }, 800);
+    }
+
+    function copyAppsScriptCode() {
+      const code = document.getElementById("appsScriptCodeBlock").textContent;
+      const btn = document.getElementById("copyScriptBtn");
+      copyTextToClipboard(code)
+        .then(() => {
+          btn.innerHTML = '<i class="fa-solid fa-check mr-1"></i>已複製！';
+          setTimeout(() => {
+            btn.innerHTML = '<i class="fa-regular fa-copy mr-1"></i>一鍵複製程式碼';
+          }, 2000);
+          showToast("已複製 Apps Script 程式碼，請貼到 Apps Script 編輯器");
+        })
+        .catch(() => showToast("複製失敗，請手動選取程式碼"));
+    }
+
+    // =========================================================================
+    // 10. CHECKLIST RENDERING & INTERACTION
+    // =========================================================================
+    function renderChecklist() {
+      const container = document.getElementById("checklistContainer");
+      let completedCount = 0;
+
+      container.innerHTML = DEFAULT_CHECKLIST.map(item => {
+        const checked = !!checklistState[item.id];
+        if (checked) completedCount++;
+
+        return `
+          <label class="flex items-start gap-3 p-3.5 rounded-xl border cursor-pointer transition ${
+            checked
+              ? "bg-kyoto-matchaPale/50 border-kyoto-matcha/40 text-kyoto-muted line-through"
+              : "bg-kyoto-bg/60 border-kyoto-border hover:border-kyoto-matcha text-kyoto-ink"
+          }">
+            <input type="checkbox" ${checked ? "checked" : ""}
+                   onchange="toggleChecklistItem('${item.id}')"
+                   class="mt-1 w-4 h-4 accent-kyoto-matcha rounded cursor-pointer flex-shrink-0" />
+            <div class="text-xs md:text-sm">
+              <span class="inline-block text-[10px] font-bold px-2 py-0.5 rounded bg-white border border-kyoto-border text-kyoto-matcha mr-1.5 no-underline">
+                ${item.group}
+              </span>
+              <span>${item.text}</span>
+            </div>
+          </label>
+        `;
+      }).join("");
+
+      document.getElementById("checklistProgressText").textContent =
+        `完成度 ${completedCount} / ${DEFAULT_CHECKLIST.length}`;
+    }
+
+    function toggleChecklistItem(id) {
+      checklistState[id] = !checklistState[id];
+      storageSet(STORAGE_KEYS.CHECKLIST, JSON.stringify(checklistState));
+      renderChecklist();
+    }
+
+    function resetChecklist() {
+      checklistState = {};
+      storageSet(STORAGE_KEYS.CHECKLIST, JSON.stringify(checklistState));
+      renderChecklist();
+      showToast("已重置行前檢核表進度");
+    }
+
+    // =========================================================================
+    // 11. MODAL & TOAST HELPERS
+    // =========================================================================
+    function openModal(id) {
+      document.getElementById(id).classList.remove("hidden");
+    }
+
+    function closeModal(id) {
+      document.getElementById(id).classList.add("hidden");
+    }
+
+    let toastTimeout = null;
+    function showToast(msg) {
+      const box = document.getElementById("toastBox");
+      document.getElementById("toastMessage").textContent = msg;
+      box.classList.remove("hidden");
+      if (toastTimeout) clearTimeout(toastTimeout);
+      toastTimeout = setTimeout(() => {
+        box.classList.add("hidden");
+      }, 2800);
+    }
+
+    // =========================================================================
+    // 12. INITIALIZE ON WINDOW LOAD
+    // =========================================================================
+    window.onload = function () {
+      loadAppState();
+      renderDaySelectorTabs();
+      renderCurrentDayContent();
+      renderExpenseSystem();
+      renderChecklist();
+
+      setSyncStatus(gasUrl ? "linked" : "none");
+
+      // Network features run after the page is usable so a slow API never blocks rendering
+      initMap();
+      fetchKyotoWeather(false);
+      if (storageGet(STORAGE_KEYS.RATE_MODE) === "manual") {
+        setRateStatus(`匯率來源：手動設定 1 JPY = ${exchangeRate} TWD（點「即時匯率」可改回自動抓取）`);
+      } else {
+        fetchLiveExchangeRate(false);
+      }
+    };
+  </script>
+</body>
+</html>
