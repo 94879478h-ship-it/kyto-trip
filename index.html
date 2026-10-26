@@ -1032,7 +1032,10 @@
                    class="w-4 h-4 accent-kyoto-matcha rounded" />
             <span>每次新增 / 修改 / 刪除帳目時，自動同步寫入 Google 試算表</span>
           </label>
-          <button onclick="disconnectGoogleSheet()" class="text-kyoto-torii hover:underline font-semibold">解除綁定</button>
+          <div class="flex items-center gap-3 shrink-0">
+            <button onclick="copySheetBindingLink()" class="text-kyoto-matcha hover:underline font-semibold" title="複製含試算表網址的連結，私訊給旅伴點開即可自動綁定">複製綁定連結</button>
+            <button onclick="disconnectGoogleSheet()" class="text-kyoto-torii hover:underline font-semibold">解除綁定</button>
+          </div>
         </div>
         <div id="gasStatusFeedback" class="text-xs font-bold text-kyoto-matcha hidden"></div>
       </div>
@@ -3362,6 +3365,36 @@ function doPost(e) {
       showToast("已解除 Google 試算表綁定");
     }
 
+    // One-tap binding link: .../#sheet=<Apps Script URL>
+    // The part after # never reaches the web server, and it is wiped from the
+    // address bar right away so the ledger URL isn't bookmarked or forwarded by accident.
+    function consumeSheetLinkFromHash() {
+      const params = new URLSearchParams(location.hash.slice(1));
+      const linkedUrl = (params.get("sheet") || "").trim();
+      if (!linkedUrl) return false;
+      history.replaceState(null, "", location.pathname + location.search);
+      if (!isValidGasUrl(linkedUrl)) {
+        showToast("綁定連結裡的試算表網址格式不正確");
+        return false;
+      }
+      document.getElementById("gasWebAppUrlInput").value = linkedUrl;
+      return true;
+    }
+
+    function copySheetBindingLink() {
+      if (!gasUrl) {
+        showGasFeedback("❌ 請先儲存並測試試算表網址，才能產生綁定連結", true);
+        return;
+      }
+      const link = `${location.origin}${location.pathname}#sheet=${encodeURIComponent(gasUrl)}`;
+      copyTextToClipboard(link)
+        .then(() => {
+          showGasFeedback("✅ 已複製綁定連結：請只私訊給旅伴，對方點開一次就會自動綁定", false);
+          showToast("已複製綁定連結");
+        })
+        .catch(() => showToast("複製失敗，請手動複製試算表網址"));
+    }
+
     function toggleAutoSyncOption(checked) {
       autoSyncEnabled = !!checked;
       storageSet(STORAGE_KEYS.AUTO_SYNC, autoSyncEnabled ? "on" : "off");
@@ -3472,6 +3505,9 @@ function doPost(e) {
       renderChecklist();
 
       setSyncStatus(gasUrl ? "linked" : "none");
+      if (consumeSheetLinkFromHash()) {
+        saveAndTestGasUrl();
+      }
 
       // Network features run after the page is usable so a slow API never blocks rendering
       initMap();
